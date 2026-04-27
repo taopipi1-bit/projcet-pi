@@ -66,6 +66,12 @@
     --fs-body:   16px;
     --fs-meta:   12px;
     --fs-label:  11px;
+
+    /* 字体栈
+     * --font-en : ChatGPT 风格的英文/数字 (system stack)
+     * --font-cn : 中文优先 975Maru SC (用户本机已装), iOS / Android 后备 PingFang SC / Noto */
+    --font-en: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-cn: "975Maru SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
   }
 
   [data-theme="dark"] {
@@ -91,11 +97,13 @@
   body {
     background: var(--bg-subtle);
     color: var(--ink);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    /* 英文字体优先 (系统 SF Pro / Inter), 后备中文 975Maru SC */
+    font-family: var(--font-en), var(--font-cn);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-size: var(--fs-body);
     line-height: 1.5;
+    overscroll-behavior-y: none;        /* iOS 防止 swipe 触发 rubber-band */
     transition: background var(--d-base) var(--ease-soft),
                 color var(--d-base) var(--ease-soft);
   }
@@ -105,7 +113,8 @@
   /* ================================ App 壳 ================================ */
   .app {
     max-width: 480px;
-    min-height: 100vh;
+    min-height: 100dvh;                /* iOS 软键盘 / 地址栏收起不会让布局跳 */
+    min-height: 100vh;                 /* 老浏览器 fallback */
     margin: 0 auto;
     background: var(--bg);
     position: relative;
@@ -129,9 +138,10 @@
   }
   .subtitle {
     font-size: var(--fs-label);
-    color: var(--gray);
+    color: var(--accent);              /* 唯一橙色: tab 主标题副标 */
     margin-top: var(--s-2);
     letter-spacing: 0.04em;
+    font-weight: 500;
   }
   .topbar-actions { display: flex; gap: var(--s-2); }
 
@@ -249,24 +259,31 @@
   }
 
   /* ================================ 按钮 ================================ */
+  /* 轻量化主按钮 (ChatGPT/Linear 风格): 更窄, 圆角更小, 字重 500, 微阴影 */
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: var(--s-2);
-    padding: var(--s-4) var(--s-5);
+    padding: 11px 18px;
     background: var(--btn-bg);
     color: var(--btn-fg);
     border: none;
-    border-radius: var(--r);
-    font-size: 15px;
-    font-weight: 600;
-    box-shadow: var(--card-shadow);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
     transition: transform var(--d-fast) var(--ease-soft),
+                background var(--d-fast) var(--ease-soft),
                 box-shadow var(--d-fast) var(--ease-soft);
+    min-height: 40px;
   }
+  .btn:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
   .btn:active { transform: translateY(1px); box-shadow: none; }
-  .btn-block { width: 100%; }
+  .btn-block { width: 100%; padding: 12px 18px; min-height: 44px; }
+  [data-theme="dark"] .btn { box-shadow: 0 1px 2px rgba(0,0,0,0.4); }
+  [data-theme="dark"] .btn:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
   /* ================================ FAB ================================ */
   .fab {
     position: fixed;
@@ -669,13 +686,20 @@
     color: var(--ink);
     font-size: 14px;
     font-weight: 500;
-    padding: var(--s-2) var(--s-3);
+    padding: 12px 14px;                /* iOS 触控标准 ≥ 44pt: 14+16+14 = 44 高 */
+    min-width: 44px;
+    min-height: 44px;
     font-family: inherit;
-    border-radius: 8px;
-    transition: transform var(--d-fast);
+    border-radius: 10px;
+    transition: transform var(--d-fast), background var(--d-fast);
+    -webkit-tap-highlight-color: transparent;
   }
-  .icon-text-btn:active { transform: translateY(1px); }
-  .icon-text-btn svg { width: 16px; height: 16px; stroke-width: 1.5; }
+  .icon-text-btn:active { transform: translateY(1px); background: var(--bg-subtle); }
+  .icon-text-btn svg { width: 18px; height: 18px; stroke-width: 1.5; }
+  /* 危险态 (删除) */
+  .icon-text-btn.danger { color: #c62828; }
+  [data-theme="dark"] .icon-text-btn.danger { color: #e58a8a; }
+  .icon-text-btn.danger:active { background: rgba(198,40,40,0.08); }
 
   .detail-hero {
     padding: var(--s-6) var(--s-5) var(--s-5);
@@ -837,6 +861,7 @@
   /* ================================ 复盘报告页 ================================ */
   #page-review-report {
     padding: 0;
+    min-height: 100dvh;
     min-height: 100vh;
     background: var(--bg);
   }
@@ -1310,6 +1335,172 @@
 
   .sync-meta { font-size: 12px; color: var(--gray); margin-top: var(--s-2); }
   .sync-section-title { font-size: var(--fs-label); color: var(--gray); letter-spacing: 0.5px; text-transform: uppercase; margin-top: var(--s-5); margin-bottom: var(--s-2); }
+
+  /* ================================ 认知 (v2 笔记本风) ================================
+   * 弱化卡片感, 强调"便签 / 手写笔记"; 不依赖背景色, 用细线分隔。 */
+  .journal { padding: 0; }
+  .journal-day {
+    padding: var(--s-5) 0 var(--s-4);
+    border-top: 1px solid var(--line-soft);
+  }
+  .journal-day:first-child { border-top: none; padding-top: var(--s-2); }
+  .journal-day-label {
+    font-size: 11px;
+    color: var(--gray);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: var(--s-3);
+    font-weight: 500;
+  }
+  .journal-entry {
+    padding: var(--s-3) 0;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--s-4);
+  }
+  .journal-entry + .journal-entry { border-top: 1px dashed var(--line-soft); }
+  .journal-time {
+    flex: 0 0 44px;
+    font-size: 12px;
+    color: var(--gray);
+    padding-top: 2px;
+    font-feature-settings: "tnum";
+    letter-spacing: 0.04em;
+  }
+  .journal-body {
+    flex: 1;
+    min-width: 0;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--ink);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  .journal-tag {
+    display: inline-block;
+    font-size: 10px;
+    color: var(--gray);
+    margin-top: 4px;
+    padding: 2px 8px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    letter-spacing: 0.04em;
+  }
+  .journal-empty {
+    padding: var(--s-8) var(--s-5);
+    text-align: center;
+    color: var(--gray);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  /* ================================ 复盘 (v2 大字卡) ================================
+   * 单条复盘 = 大字内容 + 时间戳 + 可选心情 emoji; 不再分周/月/年。 */
+  .review-list { padding: 0; }
+  .review-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--line-soft);
+    border-radius: 16px;
+    padding: var(--s-6) var(--s-5);
+    margin-bottom: var(--s-4);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    cursor: pointer;
+    transition: transform var(--d-fast), box-shadow var(--d-fast);
+  }
+  [data-theme="dark"] .review-card { box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+  .review-card:active { transform: translateY(1px); }
+  .review-card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--s-4);
+    font-size: 12px;
+    color: var(--gray);
+    letter-spacing: 0.04em;
+  }
+  .review-card-mood { font-size: 18px; line-height: 1; }
+  .review-card-content {
+    font-size: 19px;
+    line-height: 1.65;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  /* 兼容老结构化复盘 (gain/loss/lesson/focus): 把它们摊成段落 */
+  .review-card-legacy { font-size: 15px; line-height: 1.7; color: var(--ink-soft); }
+  .review-card-legacy .leg-line { margin-top: var(--s-3); }
+  .review-card-legacy .leg-line:first-child { margin-top: 0; }
+  .review-card-legacy .leg-key { font-size: 11px; color: var(--gray); letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-bottom: 2px; }
+  .review-list-empty {
+    padding: var(--s-7) var(--s-4);
+    text-align: center;
+    color: var(--gray);
+    line-height: 1.8;
+    font-size: 14px;
+  }
+
+  /* 复盘新建表单 (单页, 不分步) */
+  .rv-form { display: flex; flex-direction: column; gap: var(--s-4); }
+  .rv-textarea {
+    width: 100%;
+    min-height: 200px;
+    background: var(--bg-elev);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: var(--s-4);
+    font-size: 17px;
+    line-height: 1.65;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    transition: border-color var(--d-base);
+  }
+  .rv-textarea:focus { border-color: var(--ink); }
+  .rv-textarea::placeholder { color: var(--gray); }
+  .rv-mood { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+  .rv-mood-chip {
+    padding: 8px 14px;
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: transform var(--d-fast), border-color var(--d-fast);
+    line-height: 1;
+  }
+  .rv-mood-chip:active { transform: scale(0.95); }
+  .rv-mood-chip.active { border-color: var(--ink); background: var(--bg-subtle); }
+  .rv-mood-label { font-size: 11px; color: var(--gray); letter-spacing: 0.04em; }
+
+  /* ================================ 单页表单 (替换 wiz) ================================ */
+  .single-form { display: flex; flex-direction: column; gap: var(--s-5); }
+  .single-form .field-group { display: flex; flex-direction: column; gap: var(--s-2); }
+  .single-form .field-key {
+    font-size: 11px;
+    color: var(--gray);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .single-form .field { font-size: 16px; padding: var(--s-3) 0; }
+  .single-form .field-multi { min-height: 96px; resize: vertical; padding: var(--s-3) 0; border-bottom: 1px solid var(--line); }
+  .single-form .hint { font-size: 12px; color: var(--gray); line-height: 1.6; margin-top: -4px; }
+  .single-form .actions { margin-top: var(--s-3); }
+
+  /* ================================ Page transition (swipe / tab) ================================ */
+  .page.from-right { animation: pageInRight var(--d-slow) var(--ease-out); }
+  .page.from-left  { animation: pageInLeft  var(--d-slow) var(--ease-out); }
+  @keyframes pageInRight {
+    from { opacity: 0; transform: translateX(24px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes pageInLeft {
+    from { opacity: 0; transform: translateX(-24px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
 </style>
 </head>
 <body>
@@ -1410,10 +1601,15 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
         <span>返回</span>
       </button>
-      <button class="icon-text-btn" data-action="completeCountdown">
-        <span>完成</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-      </button>
+      <div style="display:flex;gap:4px;align-items:center">
+        <button class="icon-text-btn danger" data-action="deleteCountdown" aria-label="删除倒计时" title="删除">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+        <button class="icon-text-btn" data-action="completeCountdown">
+          <span>完成</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
     </div>
     <div id="detailBody"></div>
   </section>
@@ -1608,7 +1804,7 @@ function renderTabbar() {
     b.addEventListener('click', () => switchTab(b.dataset.tab));
   });
 }
-function switchTab(id) {
+function switchTab(id, opts = {}) {
   if (!TABS.find(t => t.id === id)) return;
   // 若处于详情页 / 报告页，先退出全屏态恢复 fab/tabbar
   if (detailContext || reportContext) {
@@ -1616,12 +1812,38 @@ function switchTab(id) {
     reportContext = null;
     exitFullPage();
   }
+  const prevIdx = TABS.findIndex(t => t.id === currentTab);
+  const nextIdx = TABS.findIndex(t => t.id === id);
   currentTab = id;
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active', 'from-left', 'from-right');
+  });
+  const next = document.getElementById('page-' + id);
+  next.classList.add('active');
+  // 方向化滑入: 来自更右的 tab → 新页面从右进; 来自更左的 tab → 从左进
+  if (opts.fromDirection === 'left')      next.classList.add('from-left');
+  else if (opts.fromDirection === 'right') next.classList.add('from-right');
+  else if (nextIdx > prevIdx)              next.classList.add('from-right');
+  else if (nextIdx < prevIdx)              next.classList.add('from-left');
   renderTabbar();
+  // 滚动复位 (避免上一个 tab 的滚动位置导致新 tab 表象"上跳")
+  window.scrollTo({ top: 0, behavior: 'auto' });
   const tab = TABS.find(t => t.id === id);
   tab.render && tab.render();
+}
+
+/* === 删除倒计时 === */
+function deleteCountdown() {
+  if (!detailContext) return;
+  const c = db.countdowns.get(detailContext);
+  if (!c) return;
+  const ok = confirm(`确定删除「${c.name}」?\n\n这条倒计时及其上的所有备注都会被清掉, 此操作不可撤销。`);
+  if (!ok) return;
+  // 删除关联的 cognitions (linkedTo === detailContext) ?
+  // 现在不强行级联, 让认知保留 (用户可能也想保留某些想法)。
+  db.countdowns.del(detailContext);
+  showToast('已删除');
+  exitCountdownDetail();
 }
 
 /* ===== 5. 工具 ===== */
@@ -1636,13 +1858,18 @@ function fmtTime(ts) {
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
+/* 认知 v2: 简化为 3 类标签;
+ * 老数据 (quote/mood/goal) 仍能渲染, 不再作为新建选项暴露。 */
 const TAGS = {
   think:  { icon: '💡', label: '想法',  cls: 't-think'  },
-  mood:   { icon: '😶', label: '心情',  cls: 't-mood'   },
-  quote:  { icon: '📖', label: '摘录',  cls: 't-quote'  },
+  feel:   { icon: '🌿', label: '心情',  cls: 't-feel'   },
   lesson: { icon: '⚠️', label: '教训',  cls: 't-lesson' },
-  goal:   { icon: '🎯', label: '目标',  cls: 't-goal'   },
+  // legacy 兼容 ↓
+  mood:   { icon: '🌿', label: '心情',  cls: 't-feel'   },
+  quote:  { icon: '💡', label: '想法',  cls: 't-think'  },
+  goal:   { icon: '💡', label: '想法',  cls: 't-think'  },
 };
+const INPUT_TAGS = ['think', 'feel', 'lesson'];   // 新建表单只暴露这 3 个
 
 /* ===== UI helpers：详情/报告页和向导通用 ===== */
 
@@ -1918,75 +2145,85 @@ function renderCognitions() {
   const el = document.getElementById('cognitionList');
   if (!list.length) {
     el.innerHTML = `
-      <div class="empty">
-        <span class="label">空空如也</span>
-        <p>不强制每天写。<br/>想到一句记一句，时间会让它有厚度。</p>
+      <div class="journal-empty">
+        想到一句, 记一句。<br/>
+        时间会让它有厚度。
       </div>`;
     return;
   }
-  // 按日期分组
+  // 按日期分组 (年-月-日)
   const groups = new Map();
   list.forEach(c => {
     const key = fmtDate(new Date(c.createdAt));
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(c);
   });
-  el.innerHTML = [...groups.entries()].map(([date, items]) => `
-    <div class="cog-group">
-      <span class="label">${date}</span>
+  el.innerHTML = `<div class="journal">` + [...groups.entries()].map(([date, items]) => `
+    <section class="journal-day">
+      <div class="journal-day-label">${date}</div>
       ${items.map(c => {
         const t = TAGS[c.tag] || TAGS.think;
         return `
-          <div class="card cog-card ${t.cls}">
-            <div class="meta">
-              <span>${fmtTime(c.createdAt)}</span>
-              <span class="tag-pill">${t.icon} ${t.label}</span>
+          <div class="journal-entry">
+            <div class="journal-time">${fmtTime(c.createdAt)}</div>
+            <div>
+              <div class="journal-body">${escapeHtml(c.content)}</div>
+              <span class="journal-tag">${t.label}</span>
             </div>
-            <div class="body">${escapeHtml(c.content)}</div>
           </div>`;
       }).join('')}
-    </div>`).join('');
+    </section>`).join('') + `</div>`;
 }
 
+/* 复盘 v2: 不分周/月/年, 单条 = 一段心声 + 时间戳 (+ 可选心情)。
+ * 老数据 (有 gain1..3 / loss1..3 / lesson / focus) 仍能展示, 摊成段落卡片。 */
+const MOODS = {
+  '😊': '开心',
+  '🌿': '平静',
+  '😶': '一般',
+  '🌧': '低落',
+  '🔥': '振奋',
+};
+
 function renderReviews() {
-  const list = db.reviews.list();
-  const types = [
-    { key: 'week',  label: '周复盘' },
-    { key: 'month', label: '月复盘' },
-    { key: 'year',  label: '年复盘' },
-  ];
+  const list = db.reviews.list().sort((a, b) => b.createdAt - a.createdAt);
   const el = document.getElementById('reviewList');
-  el.innerHTML = `
-    ${types.map(t => {
-      const items = list.filter(r => r.type === t.key).sort((a,b) => b.createdAt - a.createdAt);
-      const recent = items.slice(0, 3);
-      return `
-        <div class="card review-block">
-          <div class="row-between" style="align-items:flex-start">
-            <div>
-              <span class="label">${t.label}</span>
-              <div class="num">${items.length}</div>
-            </div>
-            <span class="label" style="margin-top:4px">累计</span>
-          </div>
-          ${recent.length ? `
-            <div class="dotted" style="margin:${'var(--s-4) 0 var(--s-2)'}">· · · ·</div>
-            <div class="review-history">
-              ${recent.map(rv => `
-                <div class="review-item" data-action="openReport" data-id="${rv.id}">
-                  <span class="when">${fmtMD(rv.createdAt)}</span>
-                  <span class="what">${escapeHtml(rv.focus || rv.lesson || '—')}</span>
-                </div>`).join('')}
-            </div>` : ''}
-          <button class="btn btn-block start-btn" data-action="newReview" data-type="${t.key}">
-            ${items.length ? '开始本期复盘' : '开始第一次'}
-          </button>
-        </div>`;
-    }).join('')}
-    <div class="dotted">· · · · · · · ·</div>
-    <div class="empty">
-      <p style="font-size:13px">复盘不打分，不评级。<br/>「写下即放下」。</p>
-    </div>`;
+  if (!list.length) {
+    el.innerHTML = `
+      <div class="review-list-empty">
+        想写就写。<br/>
+        不打分, 不评级, 不排期。<br/>
+        每一段都值得被认真说一遍。
+      </div>`;
+    return;
+  }
+  el.innerHTML = `<div class="review-list">` + list.map(r => {
+    const dateStr = new Date(r.createdAt).toLocaleString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false });
+    const mood = r.mood && MOODS[r.mood] ? `<span class="review-card-mood" title="${escapeHtml(MOODS[r.mood])}">${r.mood}</span>` : '';
+    let bodyHtml;
+    if (r.content) {
+      bodyHtml = `<div class="review-card-content">${escapeHtml(r.content)}</div>`;
+    } else {
+      // legacy: 把结构化字段拼成段落
+      const lines = [];
+      const gains = [r.gain1, r.gain2, r.gain3].filter(Boolean);
+      const losses = [r.loss1, r.loss2, r.loss3].filter(Boolean);
+      if (gains.length)  lines.push({ k: '得',     v: gains.join('; ') });
+      if (losses.length) lines.push({ k: '失',     v: losses.join('; ') });
+      if (r.lesson)      lines.push({ k: '教训',  v: r.lesson });
+      if (r.focus)       lines.push({ k: '焦点',  v: r.focus });
+      bodyHtml = `<div class="review-card-legacy">` + lines.map(l => `
+        <div class="leg-line"><span class="leg-key">${l.k}</span>${escapeHtml(l.v)}</div>`).join('') + `</div>`;
+    }
+    return `
+      <div class="review-card" data-action="openReport" data-id="${r.id}">
+        <div class="review-card-meta">
+          <span>${escapeHtml(dateStr)}</span>
+          ${mood}
+        </div>
+        ${bodyHtml}
+      </div>`;
+  }).join('') + `</div>`;
 }
 
 /* ===== 7. Modal ===== */
@@ -2004,7 +2241,7 @@ function handleFab() {
     countdown: openNewCountdown,
     checkin:   openNewHabit,
     cognition: openNewCognition,
-    review:    () => openReviewPlaceholder('week'),
+    review:    openNewReview,
   };
   (fns[currentTab] || (() => {}))();
 }
@@ -2012,23 +2249,16 @@ function handleFab() {
 function openNewCountdown() {
   openModal(`
     <h2>新建倒计时</h2>
-    <p class="lede">5 步极简向导 · 慢慢填，每一项都重要</p>
+    <p class="lede">所有字段一页填完, 没填的留空也行</p>
 
-    <form id="formCd" class="wiz">
-      <!-- ① -->
-      <div class="wiz-step" id="ws-1">
-        <span class="step-num">第 1 步 / 5</span>
-        <h3 class="ask">目标是什么？</h3>
-        <input class="field field-lg" name="name" placeholder="想达成的事" required autocomplete="off" />
-        <div class="actions">
-          <button type="button" class="btn btn-block" data-go="ws-2">下一步</button>
-        </div>
+    <form id="formCd" class="single-form">
+      <div class="field-group">
+        <label class="field-key">目标</label>
+        <input class="field" name="name" placeholder="想达成的事" required autocomplete="off" />
       </div>
 
-      <!-- ② -->
-      <div class="wiz-step" id="ws-2">
-        <span class="step-num">第 2 步 / 5</span>
-        <h3 class="ask">截止日期？</h3>
+      <div class="field-group">
+        <label class="field-key">截止日期</label>
         <div class="date-trio">
           <input class="field y" name="y" placeholder="yyyy" maxlength="4" inputmode="numeric" pattern="\\d{4}" required />
           <span class="sep">/</span>
@@ -2036,53 +2266,37 @@ function openNewCountdown() {
           <span class="sep">/</span>
           <input class="field d" name="d" placeholder="dd" maxlength="2" inputmode="numeric" pattern="\\d{1,2}" required />
         </div>
-        <div class="chip-row" id="quickDays">
+        <div class="chip-row" id="quickDays" style="margin-top:8px">
           <button type="button" class="chip" data-days="30">30 天后</button>
           <button type="button" class="chip" data-days="100">100 天后</button>
           <button type="button" class="chip" data-days="365">365 天后</button>
         </div>
-        <div class="actions">
-          <button type="button" class="btn btn-block" data-go="ws-3">下一步</button>
-        </div>
       </div>
 
-      <!-- ③ -->
-      <div class="wiz-step" id="ws-3">
-        <span class="step-num">第 3 步 / 5</span>
-        <h3 class="ask">为什么重要？</h3>
-        <textarea class="field field-multi" name="why" rows="5" placeholder="写给未来的自己，3-5 句话"></textarea>
-        <p class="hint">完成后，每次打开这个倒计时会随机抽一句作为提醒。</p>
-        <div class="actions">
-          <button type="button" class="btn btn-block" data-go="ws-4">下一步</button>
-        </div>
+      <div class="field-group">
+        <label class="field-key">为什么重要</label>
+        <textarea class="field field-multi" name="why" rows="3" placeholder="写给未来的自己,3-5 句话"></textarea>
+        <span class="hint">每次打开这个倒计时会随机抽一句作为提醒。</span>
       </div>
 
-      <!-- ④ -->
-      <div class="wiz-step" id="ws-4">
-        <span class="step-num">第 4 步 / 5</span>
-        <h3 class="ask">如果完成会怎样？</h3>
-        <input class="field field-lg" name="vision" placeholder="想象那一刻的画面" autocomplete="off" />
-        <div class="actions">
-          <button type="button" class="btn btn-block" data-go="ws-5">下一步</button>
-        </div>
+      <div class="field-group">
+        <label class="field-key">如果完成会怎样</label>
+        <input class="field" name="vision" placeholder="想象那一刻的画面" autocomplete="off" />
       </div>
 
-      <!-- ⑤ -->
-      <div class="wiz-step" id="ws-5">
-        <span class="step-num">第 5 步 / 5</span>
-        <h3 class="ask">承诺一句话</h3>
-        <input class="field field-promise" name="promise" placeholder="我会…" autocomplete="off" />
-        <p class="hint">这句会在每天打开 App 第一屏闪现 0.8 秒。</p>
-        <div class="actions">
-          <button class="btn btn-block" type="submit">钉住这个倒计时</button>
-        </div>
+      <div class="field-group">
+        <label class="field-key">承诺一句话</label>
+        <input class="field" name="promise" placeholder="我会..." autocomplete="off" />
+        <span class="hint">每天打开 App 时会在第一屏闪现 0.8 秒。</span>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-block" type="submit">钉住这个倒计时</button>
       </div>
     </form>`);
 
   const form = document.getElementById('formCd');
-  wireWizardSteps(form);
 
-  // 快捷日期胶囊 → 填充三段输入
   const quick = document.getElementById('quickDays');
   quick.addEventListener('click', e => {
     const c = e.target.closest('.chip');
@@ -2096,7 +2310,6 @@ function openNewCountdown() {
     c.classList.add('active');
   });
 
-  // 提交：拼日期 → 写库 → 渲染
   form.addEventListener('submit', e => {
     e.preventDefault();
     const fd = new FormData(form);
@@ -2118,21 +2331,16 @@ function openNewCountdown() {
 function openNewHabit() {
   openModal(`
     <h2>新增习惯</h2>
-    <p class="lede">5 步 · 关键不是"做完美"，是"做到了"</p>
+    <p class="lede">关键不是"做完美", 是"做到了"</p>
 
-    <form id="formHb" class="wiz">
-      <!-- ① 习惯名 -->
-      <div class="wiz-step" id="hs-1">
-        <span class="step-num">第 1 步 / 5</span>
-        <h3 class="ask">想养成什么习惯？</h3>
-        <input class="field field-lg" name="name" placeholder="一句话" required autocomplete="off" />
-        <div class="actions"><button type="button" class="btn btn-block" data-go="hs-2">下一步</button></div>
+    <form id="formHb" class="single-form">
+      <div class="field-group">
+        <label class="field-key">习惯名</label>
+        <input class="field" name="name" placeholder="一句话" required autocomplete="off" />
       </div>
 
-      <!-- ② 频率 -->
-      <div class="wiz-step" id="hs-2">
-        <span class="step-num">第 2 步 / 5</span>
-        <h3 class="ask">多久做一次？</h3>
+      <div class="field-group">
+        <label class="field-key">频率</label>
         <div class="chip-row" data-chip-name="frequency">
           <button type="button" class="chip" data-value="daily">每天</button>
           <button type="button" class="chip" data-value="weekly5">每周 5 天</button>
@@ -2140,13 +2348,10 @@ function openNewHabit() {
           <button type="button" class="chip" data-value="interval2">每两天一次</button>
         </div>
         <input type="hidden" name="frequency" value="daily" />
-        <div class="actions"><button type="button" class="btn btn-block" data-go="hs-3">下一步</button></div>
       </div>
 
-      <!-- ③ 触发时刻 -->
-      <div class="wiz-step" id="hs-3">
-        <span class="step-num">第 3 步 / 5 · 可选</span>
-        <h3 class="ask">什么时候做？</h3>
+      <div class="field-group">
+        <label class="field-key">触发时刻 (可选)</label>
         <div class="chip-row" data-chip-name="trigger">
           <button type="button" class="chip" data-value="morning">起床后</button>
           <button type="button" class="chip" data-value="breakfast">早饭后</button>
@@ -2154,37 +2359,31 @@ function openNewHabit() {
           <button type="button" class="chip" data-value="">不固定</button>
         </div>
         <input type="hidden" name="trigger" value="" />
-        <p class="hint">能让习惯有"挂钩点"，比定时间更容易成。</p>
-        <div class="actions"><button type="button" class="btn btn-block" data-go="hs-4">下一步</button></div>
+        <span class="hint">挂钩点比定时间更容易成。</span>
       </div>
 
-      <!-- ④ 最小启动 -->
-      <div class="wiz-step" id="hs-4">
-        <span class="step-num">第 4 步 / 5 · 关键</span>
-        <h3 class="ask">最低限度做什么算完成？</h3>
-        <input class="field field-lg" name="minStart" placeholder="比如：写一句 / 走出门 / 读一页" required autocomplete="off" />
-        <p class="hint">把"做完美"换成"做到了" —— 门槛降到不会拒绝的程度。</p>
-        <div class="actions"><button type="button" class="btn btn-block" data-go="hs-5">下一步</button></div>
+      <div class="field-group">
+        <label class="field-key">最小启动</label>
+        <input class="field" name="minStart" placeholder="写一句 / 走出门 / 读一页" required autocomplete="off" />
+        <span class="hint">门槛降到不会拒绝的程度 —— 把"做完美"换成"做到了"。</span>
       </div>
 
-      <!-- ⑤ 失败处理 -->
-      <div class="wiz-step" id="hs-5">
-        <span class="step-num">第 5 步 / 5</span>
-        <h3 class="ask">中断了怎么办？</h3>
+      <div class="field-group">
+        <label class="field-key">失败处理</label>
         <div class="chip-row" data-chip-name="failPolicy">
-          <button type="button" class="chip" data-value="soft">80% 容错（推荐）</button>
+          <button type="button" class="chip" data-value="soft">80% 容错 (推荐)</button>
           <button type="button" class="chip" data-value="strict">严格 0 容错</button>
         </div>
         <input type="hidden" name="failPolicy" value="soft" />
-        <p class="hint">推荐 80% —— 允许周内有少数缺席，不重置连击。</p>
-        <div class="actions"><button class="btn btn-block" type="submit">添加</button></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-block" type="submit">添加</button>
       </div>
     </form>`);
 
   const form = document.getElementById('formHb');
-  wireWizardSteps(form);
 
-  // 多个 chip-row：通用绑定
   form.querySelectorAll('.chip-row[data-chip-name]').forEach(row => {
     const name = row.dataset.chipName;
     const hidden = form.elements[name];
@@ -2215,33 +2414,35 @@ function openNewHabit() {
 }
 
 function openNewCognition() {
-  const tagBtns = Object.entries(TAGS)
-    .map(([k, v]) => `<button type="button" class="icon-btn" data-tag="${k}" title="${v.label}" style="font-size:16px;border-radius:999px;width:auto;padding:0 12px;height:32px">${v.icon} ${v.label}</button>`)
+  // 只暴露 3 个新建标签 (旧数据的 quote/goal 不出现在新建里)
+  const tagBtns = INPUT_TAGS
+    .map(k => {
+      const v = TAGS[k];
+      return `<button type="button" class="chip" data-tag="${k}">${v.label}</button>`;
+    })
     .join('');
   openModal(`
     <h2>随手记</h2>
     <p class="lede">想到一句记一句</p>
-    <form id="formCg">
-      <div class="form-row">
-        <input class="field" name="content" placeholder="..." autofocus required />
+    <form id="formCg" class="single-form">
+      <div class="field-group">
+        <textarea class="field field-multi" name="content" rows="4" placeholder="..." required autofocus></textarea>
       </div>
-      <div class="form-row" style="display:flex;flex-wrap:wrap;gap:8px" id="cgTags">
-        ${tagBtns}
+      <div class="field-group">
+        <label class="field-key">标签</label>
+        <div class="chip-row" id="cgTags">${tagBtns}</div>
+        <input type="hidden" name="tag" value="think" />
       </div>
-      <input type="hidden" name="tag" value="think" />
-      <button class="btn btn-block" type="submit">保存</button>
+      <div class="actions">
+        <button class="btn btn-block" type="submit">保存</button>
+      </div>
     </form>`);
   const form = document.getElementById('formCg');
   const hidden = form.querySelector('[name="tag"]');
   const tagsBox = document.getElementById('cgTags');
-  function paint() {
-    tagsBox.querySelectorAll('button').forEach(b => {
-      const active = b.dataset.tag === hidden.value;
-      b.style.background = active ? 'var(--ink)' : 'var(--bg-elev)';
-      b.style.color = active ? 'var(--bg)' : 'var(--ink)';
-      b.style.borderColor = active ? 'var(--ink)' : 'var(--line)';
-    });
-  }
+  const paint = () => tagsBox.querySelectorAll('.chip').forEach(b => {
+    b.classList.toggle('active', b.dataset.tag === hidden.value);
+  });
   paint();
   tagsBox.addEventListener('click', e => {
     const btn = e.target.closest('[data-tag]');
@@ -2252,22 +2453,13 @@ function openNewCognition() {
   form.addEventListener('submit', e => {
     e.preventDefault();
     const fd = new FormData(form);
-    db.cognitions.add({ content: fd.get('content'), tag: fd.get('tag') });
+    db.cognitions.add({ content: (fd.get('content') || '').trim(), tag: fd.get('tag') });
     closeModal();
     renderCognitions();
   });
 }
 
-function openReviewPlaceholder(type) {
-  const labels = { week: '周', month: '月', year: '年' };
-  openModal(`
-    <h2>${labels[type] || ''}复盘</h2>
-    <p class="lede">本周得 / 本周失 / 一句话教训 / 下周一个焦点 —— 4 步流程下个版本接入</p>
-    <div style="margin-top:32px;padding:24px;border:1px solid var(--line);border-radius:12px;color:var(--gray);font-size:13px;line-height:1.7">
-      复盘报告页（全屏白底大字 + 签名行 + 导出长图）也留在下个迭代。<br/>
-      框架已就位：底层 db.reviews 已可读写，复盘流程实现后直接对接。
-    </div>`);
-}
+/* (旧 openReviewPlaceholder 已移除, openNewReview 在更下方重写) */
 
 /* ===== 9. 时光机：抽 30/90/365 天前的认知 + 回响二选一 =====
  * 回响存在认知记录的 echoes: [{ at, response: 'still'|'past' }] 字段上。
@@ -2363,72 +2555,56 @@ const REVIEW_TYPE = {
 
 let reportContext = null; // 当前打开的 review id
 
-function openNewReview(type) {
-  const T = REVIEW_TYPE[type];
-  if (!T) return;
+/* 复盘 v2: 单页, 一个内容文本框 + 可选心情, 立即入库 (不再分周/月/年) */
+function openNewReview() {
+  const moodChips = Object.entries(MOODS)
+    .map(([emoji, label]) => `<button type="button" class="rv-mood-chip" data-mood="${emoji}" title="${label}">${emoji}</button>`)
+    .join('');
   openModal(`
-    <h2>${T.label}复盘</h2>
-    <p class="lede">4 步 · 写给自己看</p>
+    <h2>复盘</h2>
+    <p class="lede">想写就写, 写下即放下</p>
 
-    <form id="formRv" class="wiz">
-      <!-- ① 得 -->
-      <div class="wiz-step" id="rs-1">
-        <span class="step-num">第 1 步 / 4 · ${T.unit}得</span>
-        <h3 class="ask">让你有底气的 3 件事</h3>
-        <input class="field field-lg" name="gain1" placeholder="第 1 件" required autocomplete="off" />
-        <input class="field field-lg" name="gain2" placeholder="第 2 件" required autocomplete="off" style="margin-top:16px" />
-        <input class="field field-lg" name="gain3" placeholder="第 3 件" required autocomplete="off" style="margin-top:16px" />
-        <div class="actions"><button type="button" class="btn btn-block" data-go="rs-2">下一步</button></div>
+    <form id="formRv" class="rv-form">
+      <textarea class="rv-textarea" name="content" placeholder="今天 / 这一段 / 这件事..." required autofocus></textarea>
+
+      <div class="field-group">
+        <span class="rv-mood-label">心情 (可选)</span>
+        <div class="rv-mood" id="rvMoodRow">${moodChips}</div>
+        <input type="hidden" name="mood" value="" />
       </div>
 
-      <!-- ② 失 -->
-      <div class="wiz-step" id="rs-2">
-        <span class="step-num">第 2 步 / 4 · ${T.unit}失</span>
-        <h3 class="ask">让你不安的 3 件事</h3>
-        <input class="field field-lg" name="loss1" placeholder="第 1 件" required autocomplete="off" />
-        <input class="field field-lg" name="loss2" placeholder="第 2 件" required autocomplete="off" style="margin-top:16px" />
-        <input class="field field-lg" name="loss3" placeholder="第 3 件" required autocomplete="off" style="margin-top:16px" />
-        <p class="hint">写下即放下 —— 这三条之后不会再回看。</p>
-        <div class="actions"><button type="button" class="btn btn-block" data-go="rs-3">下一步</button></div>
-      </div>
-
-      <!-- ③ 教训 -->
-      <div class="wiz-step" id="rs-3">
-        <span class="step-num">第 3 步 / 4 · 教训</span>
-        <h3 class="ask">一句话教训</h3>
-        <input class="field field-promise" name="lesson" placeholder="..." required autocomplete="off" />
-        <div class="actions"><button type="button" class="btn btn-block" data-go="rs-4">下一步</button></div>
-      </div>
-
-      <!-- ④ 焦点 -->
-      <div class="wiz-step" id="rs-4">
-        <span class="step-num">第 4 步 / 4 · ${T.next}焦点</span>
-        <h3 class="ask">${T.next}只做好这一件</h3>
-        <input class="field field-promise" name="focus" placeholder="${T.next}只做好这一件就值了" required autocomplete="off" />
-        <p class="hint">只能写一个，强制取舍。</p>
-        <div class="actions"><button class="btn btn-block" type="submit">完成复盘</button></div>
+      <div class="actions">
+        <button class="btn btn-block" type="submit">收下这一段</button>
       </div>
     </form>`);
 
   const form = document.getElementById('formRv');
-  wireWizardSteps(form);
+  const hidden = form.elements.mood;
+  const row = document.getElementById('rvMoodRow');
+  row.addEventListener('click', e => {
+    const c = e.target.closest('.rv-mood-chip');
+    if (!c) return;
+    const wasActive = c.classList.contains('active');
+    row.querySelectorAll('.rv-mood-chip').forEach(x => x.classList.remove('active'));
+    if (!wasActive) {
+      c.classList.add('active');
+      hidden.value = c.dataset.mood;
+    } else {
+      hidden.value = '';
+    }
+  });
 
   form.addEventListener('submit', e => {
     e.preventDefault();
     const fd = new FormData(form);
-    const rec = db.reviews.add({
-      type,
-      gain1: (fd.get('gain1') || '').trim(),
-      gain2: (fd.get('gain2') || '').trim(),
-      gain3: (fd.get('gain3') || '').trim(),
-      loss1: (fd.get('loss1') || '').trim(),
-      loss2: (fd.get('loss2') || '').trim(),
-      loss3: (fd.get('loss3') || '').trim(),
-      lesson: (fd.get('lesson') || '').trim(),
-      focus:  (fd.get('focus')  || '').trim(),
+    const content = (fd.get('content') || '').trim();
+    if (!content) return;
+    db.reviews.add({
+      content,
+      mood: fd.get('mood') || '',
     });
     closeModal();
-    enterReviewReport(rec.id);
+    renderReviews();
   });
 }
 
@@ -2453,11 +2629,31 @@ function exitReviewReport() {
 }
 
 function renderReviewReport(r) {
+  const name = (db.settings.get().name || 'You').trim() || 'You';
+  const moodEmoji = r.mood && MOODS[r.mood] ? `<span style="font-size:24px;margin-right:8px">${r.mood}</span>` : '';
+
+  // v2 新结构: 单段 content。 老结构 (有 type / gain / lesson / focus 等) 仍按之前的报告样式渲染。
+  if (r.content) {
+    document.getElementById('reportBody').innerHTML = `
+      <div class="report-title">复盘</div>
+      <div class="report-range">${escapeHtml(new Date(r.createdAt).toLocaleString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false }))}</div>
+
+      <section class="report-block">
+        ${moodEmoji}
+        <p class="report-focus" style="white-space:pre-wrap;font-size:22px;font-weight:300;line-height:1.7">${escapeHtml(r.content)}</p>
+      </section>
+
+      <div class="dotted">· · · · · · · ·</div>
+
+      <div class="report-sign">— ${escapeHtml(name)} · 写于 ${dayLabel(r.createdAt)}</div>`;
+    return;
+  }
+
+  // === legacy: 周/月/年结构 ===
   const T = REVIEW_TYPE[r.type] || REVIEW_TYPE.week;
   const idx  = reviewIndex(r);
   const range = reviewDateRange(r);
   const auto = buildAutoSection(r);
-  const name = (db.settings.get().name || 'You').trim() || 'You';
 
   document.getElementById('reportBody').innerHTML = `
     <div class="report-title">${T.label}复盘</div>
@@ -3463,6 +3659,79 @@ function escapeAttr(s) {
   return escapeHtml(s).replace(/"/g, '&quot;');
 }
 
+/* ===== 9.7  Swipe 手势导航 =====
+ * - 在 4 个 tab 之间左/右划切换 (倒计时 ↔ 打卡 ↔ 认知 ↔ 复盘)
+ * - 在二级页面 (详情 / 报告) 上, 向右划 = 返回
+ * - modal / time machine / ceremony 激活时, 向右划 = 关闭
+ * - 起手在输入框 / 横滚区 / [data-no-swipe] 上的不算 (避免误触)
+ */
+function setupSwipeNav() {
+  let startX = 0, startY = 0, startTime = 0, ignore = false;
+  const SWIPE_MIN_X = 60;        // 最小水平距离
+  const SWIPE_MAX_T = 600;       // 最大耗时 (ms)
+  const SWIPE_RATIO = 0.6;       // |dy| 不能超过 |dx| × ratio
+
+  const skipSelector = 'input, textarea, [contenteditable], .date-row, .modal-inner *, .tm-content *, .ceremony-content *, .checkin-grid, [data-no-swipe]';
+
+  document.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) { ignore = true; return; }
+    const t = e.touches[0];
+    if (e.target.closest(skipSelector)) { ignore = true; return; }
+    ignore = false;
+    startX = t.clientX;
+    startY = t.clientY;
+    startTime = Date.now();
+  }, { passive: true });
+
+  document.addEventListener('touchend', e => {
+    if (ignore) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+    const dt = Date.now() - startTime;
+    if (Math.abs(dx) < SWIPE_MIN_X) return;
+    if (Math.abs(dy) > Math.abs(dx) * SWIPE_RATIO) return;
+    if (dt > SWIPE_MAX_T) return;
+
+    const goingRight = dx > 0;   // 右划
+
+    // 1) 任何活跃覆盖层: 右划 = 关闭
+    const ceremony   = document.getElementById('ceremony');
+    const tm         = document.getElementById('timeMachine');
+    const modal      = document.getElementById('modal');
+    if (ceremony && ceremony.classList.contains('active')) {
+      if (goingRight) closeCeremony();
+      return;
+    }
+    if (tm && tm.classList.contains('active')) {
+      if (goingRight) closeTimeMachine();
+      return;
+    }
+    if (modal && modal.classList.contains('active')) {
+      if (goingRight) closeModal();
+      return;
+    }
+
+    // 2) 二级页面: 右划 = 返回
+    if (typeof detailContext !== 'undefined' && detailContext) {
+      if (goingRight) exitCountdownDetail();
+      return;
+    }
+    if (typeof reportContext !== 'undefined' && reportContext) {
+      if (goingRight) exitReviewReport();
+      return;
+    }
+
+    // 3) tab 间左右划
+    const idx = TABS.findIndex(x => x.id === currentTab);
+    if (goingRight && idx > 0) {
+      switchTab(TABS[idx - 1].id, { fromDirection: 'left' });
+    } else if (!goingRight && idx >= 0 && idx < TABS.length - 1) {
+      switchTab(TABS[idx + 1].id, { fromDirection: 'right' });
+    }
+  }, { passive: true });
+}
+
 /* ===== 10. Bootstrap ===== */
 async function bootstrap() {
   migrate();
@@ -3521,7 +3790,7 @@ async function bootstrap() {
   } else if (view === 'reviews') {
     setTimeout(() => switchTab('review'), 0);
   } else if (view === 'newReview') {
-    setTimeout(() => openNewReview(params.get('type') || 'week'), 0);
+    setTimeout(() => openNewReview(), 0);
   } else if (view === 'timeMachine') {
     setTimeout(() => openTimeMachine(), 0);
   } else if (view === 'ceremony') {
@@ -3559,15 +3828,16 @@ async function bootstrap() {
     else if (a === 'completeCountdown') completeCountdown();
     else if (a === 'closeCeremony') closeCeremony();
     else if (a === 'confirmComplete') confirmComplete();
-    else if (a === 'newReview') openNewReview(t.dataset.type);
+    else if (a === 'newReview') openNewReview();
     else if (a === 'openReport') enterReviewReport(t.dataset.id);
     else if (a === 'closeReport') exitReviewReport();
     else if (a === 'exportReport') exportReport();
     else if (a === 'startWeekReview') {
       dismissSundayBar();
-      openNewReview('week');
+      openNewReview();
     }
     else if (a === 'dismissSunday') dismissSundayBar();
+    else if (a === 'deleteCountdown') deleteCountdown();
   });
 
   document.getElementById('fab').addEventListener('click', handleFab);
@@ -3599,6 +3869,9 @@ async function bootstrap() {
     if (isFirst) seedExamples();
     switchTab('countdown');
   });
+
+  // swipe 手势导航 (tab 间 + 二级页面右划返回)
+  setupSwipeNav();
 }
 
 /* 首次种入示例，让用户立刻看到"形" */
@@ -3637,6 +3910,12 @@ function seedExamples() {
   }
   if (db.reviews.list().length === 0) {
     const wk = 7 * 86400000;
+    // v2 新风格 (单段内容 + 心情) — 最近一条
+    db.reviews.add({
+      content: '这周整体比上周稳。\n\n书的第二章写完了，状态最好的两天是早上跑步之后，再坐下来写一个小时。其它时候即使写不动也不强求，先翻几页书让自己回到那个语境里。\n\n下一段想关注一件事: 不熬夜。',
+      mood: '🌿',
+      createdAt: Date.now() - 0.4 * wk,
+    });
     db.reviews.add({
       type: 'week',
       gain1: '坚持早起 5 天',
