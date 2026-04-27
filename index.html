@@ -1,0 +1,3118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+<title>Life of Pi</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon-180.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Life of Pi" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+<style>
+  /* ================================
+   * 设计 Token —— 全部走 CSS 变量
+   * 切换主题 / 改字号 / 改动效时长 都改这里
+   * ================================ */
+  :root {
+    /* 颜色 · 浅色 */
+    --bg:           #ffffff;
+    --bg-elev:      #ffffff;
+    --bg-subtle:    #fafafa;
+    --ink:          #0a0a0a;
+    --ink-soft:     #1a1a1a;
+    --gray:         #6b6b6b;
+    --line:         #e5e5e5;
+    --line-soft:    #f0f0f0;
+    --accent:       #ff6b35;
+    --card-shadow:  0 1px 3px rgba(0,0,0,0.04);
+    --fab-shadow:   0 4px 20px rgba(0,0,0,0.10);
+    --overlay:      rgba(255,255,255,0.92);
+    --btn-bg:       #0a0a0a;
+    --btn-fg:       #ffffff;
+
+    /* 间距 */
+    --s-1: 4px;
+    --s-2: 8px;
+    --s-3: 12px;
+    --s-4: 16px;
+    --s-5: 24px;
+    --s-6: 32px;
+    --s-7: 48px;
+    --s-8: 64px;
+
+    /* 圆角 */
+    --r-sm: 6px;
+    --r:    12px;
+    --r-lg: 20px;
+
+    /* 动效 */
+    --d-fast: 120ms;
+    --d-base: 160ms;
+    --d-slow: 320ms;
+    --ease-out:  cubic-bezier(0.32, 0.72, 0, 1);
+    --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* 字号 */
+    --fs-num-xl: 72px;   /* 大数字 */
+    --fs-num-lg: 48px;
+    --fs-h1:     32px;
+    --fs-h2:     24px;
+    --fs-body:   16px;
+    --fs-meta:   12px;
+    --fs-label:  11px;
+  }
+
+  [data-theme="dark"] {
+    --bg:           #0a0a0a;
+    --bg-elev:      #141414;
+    --bg-subtle:    #050505;
+    --ink:          #ededed;
+    --ink-soft:     #d4d4d4;
+    --gray:         #6b6b6b;
+    --line:         #2a2a2a;
+    --line-soft:    #1a1a1a;
+    --accent:       #ff6b35;
+    --card-shadow:  0 1px 3px rgba(0,0,0,0.4);
+    --fab-shadow:   0 4px 20px rgba(0,0,0,0.5);
+    --overlay:      rgba(10,10,10,0.92);
+    --btn-bg:       #ededed;
+    --btn-fg:       #0a0a0a;
+  }
+
+  /* ================================ Reset ================================ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg-subtle);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: var(--fs-body);
+    line-height: 1.5;
+    transition: background var(--d-base) var(--ease-soft),
+                color var(--d-base) var(--ease-soft);
+  }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+
+  /* ================================ App 壳 ================================ */
+  .app {
+    max-width: 480px;
+    min-height: 100vh;
+    margin: 0 auto;
+    background: var(--bg);
+    position: relative;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+    transition: background var(--d-base) var(--ease-soft);
+  }
+
+  /* ================================ Topbar ================================ */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    /* 顶部 padding = 设计值 + 刘海安全区，让 status-bar-style: black-translucent 下不被刘海挡 */
+    padding: calc(var(--s-6) + env(safe-area-inset-top)) var(--s-5) var(--s-5);
+  }
+  .topbar h1 {
+    font-size: var(--fs-h1);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .subtitle {
+    font-size: var(--fs-label);
+    color: var(--gray);
+    margin-top: var(--s-2);
+    letter-spacing: 0.04em;
+  }
+  .topbar-actions { display: flex; gap: var(--s-2); }
+
+  /* 圆形操作按钮（主题/时光机） */
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--bg-elev);
+    color: var(--ink);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--d-fast) var(--ease-soft),
+                box-shadow var(--d-fast) var(--ease-soft),
+                background var(--d-base) var(--ease-soft),
+                border-color var(--d-base) var(--ease-soft);
+    box-shadow: var(--card-shadow);
+  }
+  .icon-btn:active { transform: translateY(1px); box-shadow: none; }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  /* ================================ Page ================================ */
+  .page {
+    display: none;
+    padding: 0 var(--s-5) var(--s-5);
+  }
+  .page.active {
+    display: block;
+    animation: pageIn var(--d-slow) var(--ease-out);
+  }
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateX(8px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  /* ================================ Card ================================ */
+  .card {
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    padding: var(--s-5);
+    margin-bottom: var(--s-4);
+    box-shadow: var(--card-shadow);
+    transition: transform var(--d-fast) var(--ease-soft),
+                background var(--d-base) var(--ease-soft),
+                border-color var(--d-base) var(--ease-soft);
+  }
+  /* 大数字 + 小标签：强字重对比即层次 */
+  .big-num {
+    font-size: var(--fs-num-xl);
+    font-weight: 200;
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+  }
+  .label {
+    font-size: var(--fs-label);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gray);
+  }
+  .row-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+
+  /* ================================ 倒计时卡片 ================================ */
+  .cd-card .name {
+    font-size: var(--fs-h2);
+    font-weight: 700;
+    margin: var(--s-3) 0 var(--s-4);
+    line-height: 1.3;
+  }
+  .cd-card .date {
+    font-size: var(--fs-meta);
+    color: var(--gray);
+    margin-top: var(--s-3);
+  }
+  .progress {
+    height: 2px;
+    background: var(--line);
+    margin-top: var(--s-3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress > span {
+    display: block;
+    height: 100%;
+    background: var(--ink);
+    transition: width var(--d-slow) var(--ease-out);
+  }
+
+  /* ================================ 输入（下划线） ================================ */
+  .field {
+    display: block;
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+    padding: var(--s-3) 0;
+    font-size: var(--fs-body);
+    outline: none;
+    transition: border-color var(--d-base) var(--ease-soft),
+                border-width var(--d-base) var(--ease-soft);
+    font-family: inherit;
+  }
+  .field::placeholder { color: var(--gray); }
+  .field:focus {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: calc(var(--s-3) - 1px);
+  }
+
+  /* ================================ 按钮 ================================ */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--s-2);
+    padding: var(--s-4) var(--s-5);
+    background: var(--btn-bg);
+    color: var(--btn-fg);
+    border: none;
+    border-radius: var(--r);
+    font-size: 15px;
+    font-weight: 600;
+    box-shadow: var(--card-shadow);
+    transition: transform var(--d-fast) var(--ease-soft),
+                box-shadow var(--d-fast) var(--ease-soft);
+  }
+  .btn:active { transform: translateY(1px); box-shadow: none; }
+  .btn-block { width: 100%; }
+  /* ================================ FAB ================================ */
+  .fab {
+    position: fixed;
+    bottom: calc(82px + env(safe-area-inset-bottom));
+    right: var(--s-5);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--btn-bg);
+    color: var(--btn-fg);
+    border: none;
+    box-shadow: var(--fab-shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 30;
+    transition: transform var(--d-fast) var(--ease-soft),
+                box-shadow var(--d-fast) var(--ease-soft);
+  }
+  .fab svg { width: 22px; height: 22px; stroke-width: 1.5; }
+  .fab:active { transform: translateY(1px); box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+  @media (min-width: 480px) {
+    .fab { right: calc(50vw - 240px + var(--s-5)); }
+  }
+
+  /* ================================ 底栏 Tabbar ================================ */
+  .tabbar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: var(--bg);
+    border-top: 1px solid var(--line);
+    display: flex;
+    padding: var(--s-2) 0 calc(var(--s-2) + env(safe-area-inset-bottom));
+    z-index: 40;
+    transition: background var(--d-base) var(--ease-soft);
+  }
+  .tabbar button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: var(--s-2) 0;
+    color: var(--gray);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: color var(--d-fast);
+  }
+  .tabbar button.active { color: var(--ink); }
+  .tabbar button:active { transform: translateY(1px); }
+  .tabbar svg { width: 22px; height: 22px; stroke-width: 1.5; }
+
+  /* ================================ 空状态 ================================ */
+  .empty {
+    text-align: center;
+    padding: var(--s-7) var(--s-5);
+    color: var(--gray);
+  }
+  .empty .label { display: block; margin-bottom: var(--s-4); }
+  .empty p { font-size: 14px; line-height: 1.7; max-width: 280px; margin: 0 auto; }
+
+  /* ================================ Splash / 登录页 ================================ */
+  .splash {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* 留刘海/底部圆角空间（standalone 全屏下尤其需要） */
+    padding:
+      max(var(--s-7), env(safe-area-inset-top) + var(--s-5))
+      var(--s-7)
+      max(var(--s-7), env(safe-area-inset-bottom) + var(--s-5));
+    transition: opacity var(--d-slow) var(--ease-out),
+                background var(--d-base) var(--ease-soft);
+  }
+  .splash.hidden { opacity: 0; pointer-events: none; }
+  .splash .brand {
+    font-size: var(--fs-label);
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: var(--s-5);
+  }
+  .splash .quote {
+    font-size: 28px;
+    font-weight: 200;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+    max-width: 320px;
+    text-align: center;
+    margin-bottom: var(--s-7);
+  }
+  .splash-form {
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-5);
+  }
+
+  /* ================================ 认知 Cognition ================================ */
+  .cog-group { margin-bottom: var(--s-6); }
+  .cog-group .label { display: block; margin-bottom: var(--s-3); }
+  .cog-card {
+    position: relative;
+    padding-left: calc(var(--s-5) + 4px);
+  }
+  .cog-card::before {
+    content: '';
+    position: absolute;
+    left: var(--s-5); top: var(--s-5); bottom: var(--s-5);
+    width: 4px;
+    background: var(--ink);
+    border-radius: 2px;
+  }
+  .cog-card.t-mood::before    { background: var(--gray); }
+  .cog-card.t-quote::before   { background: var(--ink-soft); opacity: 0.7; }
+  .cog-card.t-lesson::before  { background: var(--ink); }
+  .cog-card.t-goal::before    { background: var(--accent); }
+  .cog-card .meta {
+    display: flex;
+    gap: var(--s-2);
+    align-items: center;
+    margin-bottom: var(--s-3);
+    font-size: var(--fs-meta);
+    color: var(--gray);
+  }
+  .tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 10px;
+    color: var(--ink);
+  }
+  .cog-card .body {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* ================================ 打卡 ================================ */
+  .checkin-list { padding: 0 var(--s-5); }
+  .checkin-row {
+    display: flex;
+    align-items: center;
+    gap: var(--s-4);
+    min-height: 64px;
+    padding: var(--s-3) 0;
+    border-bottom: 1px solid var(--line-soft);
+    transition: opacity var(--d-base);
+  }
+  .checkin-row:last-child { border-bottom: none; }
+  .checkin-row > div:not(.checkbox) { flex: 1; min-width: 0; }
+  .checkin-row .streak {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .checkbox {
+    width: 24px;
+    height: 24px;
+    border: 1.5px solid var(--gray);
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: transparent;
+    transition: background var(--d-base) var(--ease-soft),
+                border-color var(--d-base) var(--ease-soft);
+    position: relative;
+  }
+  .checkin-row.done .checkbox {
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+  .checkin-row.done .checkbox::after {
+    content: '';
+    position: absolute;
+    left: 7px; top: 4px;
+    width: 6px; height: 10px;
+    border-right: 1.5px solid var(--bg);
+    border-bottom: 1.5px solid var(--bg);
+    transform: rotate(45deg);
+  }
+  .checkin-row .name {
+    font-size: var(--fs-body);
+    font-weight: 500;
+    transition: color var(--d-base);
+  }
+  .checkin-row.done .name {
+    text-decoration: line-through;
+    color: var(--gray);
+  }
+  .checkin-row .streak {
+    font-size: var(--fs-meta);
+    color: var(--gray);
+    margin-top: 2px;
+  }
+
+  /* ================================ 复盘 Review ================================ */
+  .review-card {
+    cursor: pointer;
+  }
+  .review-card .num {
+    font-size: var(--fs-num-lg);
+    font-weight: 200;
+    line-height: 1;
+    margin-top: var(--s-3);
+  }
+  .review-card .last {
+    font-size: var(--fs-meta);
+    color: var(--gray);
+    margin-top: var(--s-3);
+  }
+
+  /* 点状分割线（手帐风） */
+  .dotted {
+    text-align: center;
+    letter-spacing: 4px;
+    color: var(--gray);
+    margin: var(--s-6) 0;
+    font-size: 12px;
+    user-select: none;
+  }
+
+  /* ================================ Modal ================================ */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: var(--overlay);
+    z-index: 200;
+    display: none;
+    overflow-y: auto;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .modal.active {
+    display: block;
+    animation: modalIn var(--d-slow) var(--ease-out);
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .modal-inner {
+    max-width: 380px;
+    margin: 0 auto;
+    padding: var(--s-7) var(--s-5) var(--s-7);
+    position: relative;
+  }
+  .modal .close {
+    position: absolute;
+    top: var(--s-4);
+    right: var(--s-4);
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    color: var(--ink);
+    font-size: 24px;
+    font-weight: 200;
+    line-height: 1;
+  }
+  .modal h2 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: var(--s-2);
+  }
+  .modal .lede {
+    color: var(--gray);
+    font-size: var(--fs-meta);
+    margin-bottom: var(--s-6);
+    letter-spacing: 0.04em;
+  }
+  .form-row { margin-bottom: var(--s-5); }
+  .form-row .label { display: block; margin-bottom: var(--s-2); }
+
+  /* 让深色下 input autofill 也正确 */
+  input:-webkit-autofill { -webkit-text-fill-color: var(--ink); }
+
+  /* ================================ 向导 Wizard ================================ */
+  .wiz { display: flex; flex-direction: column; }
+  .wiz-step {
+    padding: var(--s-7) 0 var(--s-6);
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-bottom: 1px dashed var(--line);
+  }
+  .wiz-step:last-child { border-bottom: none; padding-bottom: var(--s-5); }
+  .step-num {
+    font-size: var(--fs-label);
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: var(--s-4);
+  }
+  .ask {
+    font-size: 26px;
+    font-weight: 200;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    margin-bottom: var(--s-6);
+  }
+  .hint {
+    font-size: 12px;
+    color: var(--gray);
+    line-height: 1.7;
+    margin-top: var(--s-4);
+  }
+  .wiz-step .actions { margin-top: var(--s-6); }
+
+  .field-lg     { font-size: 22px; font-weight: 300; padding: var(--s-3) 0; }
+  .field-promise{ font-size: 28px; font-weight: 200; padding: var(--s-3) 0; letter-spacing: -0.01em; }
+  .field-multi {
+    resize: none;
+    min-height: 120px;
+    font-family: inherit;
+    line-height: 1.7;
+    padding-top: var(--s-3);
+  }
+
+  /* 三段式日期 */
+  .date-trio {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-3);
+  }
+  .date-trio .field {
+    font-size: 22px;
+    font-weight: 300;
+    text-align: center;
+    padding: var(--s-3) 0;
+  }
+  .date-trio .y { width: 4.5em; }
+  .date-trio .m, .date-trio .d { width: 2.6em; }
+  .date-trio .sep {
+    color: var(--gray);
+    font-size: 22px;
+    font-weight: 300;
+  }
+
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+    margin-top: var(--s-4);
+  }
+  .chip {
+    padding: 6px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--bg-elev);
+    color: var(--ink-soft);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    transition: background var(--d-fast), color var(--d-fast),
+                border-color var(--d-fast), transform var(--d-fast);
+  }
+  .chip.active {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+  .chip:active { transform: translateY(1px); }
+
+  /* ================================ 详情页 ================================ */
+  #page-countdown-detail { padding: 0 0 var(--s-5); }
+  .detail-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: calc(var(--s-4) + env(safe-area-inset-top)) var(--s-3) var(--s-4);
+  }
+  .icon-text-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    background: transparent;
+    border: none;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 500;
+    padding: var(--s-2) var(--s-3);
+    font-family: inherit;
+    border-radius: 8px;
+    transition: transform var(--d-fast);
+  }
+  .icon-text-btn:active { transform: translateY(1px); }
+  .icon-text-btn svg { width: 16px; height: 16px; stroke-width: 1.5; }
+
+  .detail-hero {
+    padding: var(--s-6) var(--s-5) var(--s-5);
+    text-align: center;
+  }
+  .detail-hero .label { display: block; margin-bottom: var(--s-4); }
+  .detail-hero .num-xl {
+    font-size: 96px;
+    font-weight: 200;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+  .detail-hero .total {
+    font-size: 13px;
+    color: var(--gray);
+    margin-top: var(--s-3);
+    letter-spacing: 0.04em;
+  }
+  .detail-hero .name {
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: var(--s-6);
+    letter-spacing: -0.01em;
+  }
+  .detail-hero .date {
+    font-size: 12px;
+    color: var(--gray);
+    margin-top: var(--s-2);
+  }
+  .detail-progress { margin: 0 var(--s-5); }
+
+  .why-quote {
+    padding: var(--s-6) var(--s-5);
+    text-align: center;
+  }
+  .quote-text {
+    font-size: 22px;
+    font-weight: 200;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    color: var(--ink-soft);
+  }
+  .quote-text::before, .quote-text::after { content: '"'; opacity: 0.4; padding: 0 2px; }
+  .quote-tag { margin-top: var(--s-4); }
+
+  .detail-meta {
+    padding: 0 var(--s-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-5);
+  }
+  .detail-meta .item-label {
+    font-size: var(--fs-label);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gray);
+    display: block;
+    margin-bottom: var(--s-2);
+  }
+  .detail-meta .item-body {
+    color: var(--ink-soft);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  .detail-meta .item-body.large {
+    font-size: 22px;
+    font-weight: 200;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  .detail-input {
+    padding: var(--s-5);
+    margin-top: var(--s-7);
+    border-top: 1px solid var(--line);
+  }
+  .detail-input .label { display: block; margin-bottom: var(--s-3); }
+  .detail-input form {
+    display: flex;
+    align-items: baseline;
+    gap: var(--s-3);
+  }
+  .detail-input .field { flex: 1; }
+  .detail-input .submit {
+    background: transparent;
+    border: none;
+    color: var(--ink);
+    font-size: var(--fs-label);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: var(--s-2) 0;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .detail-input .submit:disabled { color: var(--gray); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ink);
+    color: var(--bg);
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 13px;
+    z-index: 300;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--d-base) var(--ease-soft);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .toast.show { opacity: 1; }
+
+  /* 倒计时列表卡片可点击 */
+  .cd-card { cursor: pointer; }
+  .cd-card:active { transform: translateY(1px); }
+
+  /* ================================ 复盘卡（改版） ================================ */
+  .review-block { cursor: default; }
+  .review-block .num {
+    font-size: var(--fs-num-lg);
+    font-weight: 200;
+    line-height: 1;
+    margin: var(--s-3) 0 var(--s-2);
+  }
+  .review-block .start-btn {
+    margin-top: var(--s-5);
+    width: 100%;
+  }
+  .review-history {
+    margin-top: var(--s-3);
+  }
+  .review-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: var(--s-3) 0;
+    border-bottom: 1px solid var(--line-soft);
+    font-size: 13px;
+    gap: var(--s-3);
+    cursor: pointer;
+    transition: opacity var(--d-fast);
+  }
+  .review-item:last-child { border-bottom: none; }
+  .review-item:active { opacity: 0.55; }
+  .review-item .when { color: var(--gray); flex-shrink: 0; }
+  .review-item .what {
+    color: var(--ink-soft);
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ================================ 复盘报告页 ================================ */
+  #page-review-report {
+    padding: 0;
+    min-height: 100vh;
+    background: var(--bg);
+  }
+  .report-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: calc(var(--s-4) + env(safe-area-inset-top)) var(--s-3) var(--s-4);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 10;
+    border-bottom: 1px solid transparent;
+    transition: border-color var(--d-base);
+  }
+  .report-bar.scrolled { border-bottom-color: var(--line); }
+  #reportBody {
+    padding: var(--s-6) var(--s-5) var(--s-7);
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .report-title {
+    font-size: var(--fs-label);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--gray);
+    margin-bottom: var(--s-3);
+  }
+  .report-num {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: var(--s-2);
+    line-height: 1.1;
+  }
+  .report-range {
+    font-size: 14px;
+    color: var(--gray);
+  }
+  .report-block {
+    margin-top: var(--s-7);
+  }
+  .report-block .label {
+    display: block;
+    margin-bottom: var(--s-4);
+  }
+  .report-item {
+    font-size: 17px;
+    line-height: 1.6;
+    margin-bottom: var(--s-3);
+    color: var(--ink-soft);
+  }
+  .report-lesson,
+  .report-focus {
+    font-size: 26px;
+    font-weight: 200;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .auto-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: var(--s-3) 0;
+    border-bottom: 1px solid var(--line-soft);
+    font-size: 14px;
+    gap: var(--s-3);
+  }
+  .auto-row:last-child { border-bottom: none; }
+  .auto-row .k { color: var(--gray); }
+  .auto-row .v {
+    color: var(--ink);
+    font-weight: 500;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .report-sign {
+    margin-top: var(--s-7);
+    text-align: center;
+    font-size: 16px;
+    font-weight: 200;
+    color: var(--gray);
+    letter-spacing: -0.01em;
+  }
+
+  /* ================================ 时光机（始终黑底，不随主题翻转） ================================ */
+  .time-machine {
+    position: fixed;
+    inset: 0;
+    background: #0a0a0a;
+    color: #ededed;
+    z-index: 250;
+    display: none;
+    flex-direction: column;
+    padding: var(--s-5) var(--s-5) var(--s-7);
+  }
+  .time-machine.active {
+    display: flex;
+    animation: tmIn var(--d-slow) var(--ease-out);
+  }
+  @keyframes tmIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .tm-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: env(safe-area-inset-top) 0 var(--s-6);
+  }
+  .tm-brand {
+    font-size: var(--fs-label);
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #6b6b6b;
+  }
+  .tm-close {
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: 1px solid #2a2a2a;
+    color: #ededed;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 200;
+    line-height: 1;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform var(--d-fast), border-color var(--d-fast);
+  }
+  .tm-close:active { transform: translateY(1px); }
+  .tm-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    padding: 0 var(--s-3);
+  }
+  .tm-eyebrow {
+    font-size: var(--fs-label);
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #6b6b6b;
+    margin-bottom: var(--s-5);
+  }
+  .tm-text {
+    font-size: 26px;
+    font-weight: 200;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    color: #ededed;
+    word-break: break-word;
+  }
+  .tm-text::before, .tm-text::after { content: '"'; opacity: 0.4; padding: 0 4px; }
+  .tm-tag-wrap { margin-top: var(--s-6); }
+  .tm-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border: 1px solid #2a2a2a;
+    border-radius: 999px;
+    font-size: 11px;
+    color: #6b6b6b;
+  }
+  .tm-empty {
+    font-size: 18px;
+    line-height: 1.7;
+    color: #6b6b6b;
+    font-weight: 200;
+  }
+  .tm-empty .hint {
+    font-size: 12px;
+    opacity: 0.6;
+    margin-top: var(--s-4);
+    letter-spacing: 0.04em;
+    color: #6b6b6b;
+  }
+  .tm-actions {
+    display: flex;
+    gap: var(--s-3);
+    padding-top: var(--s-5);
+  }
+  .tm-btn {
+    flex: 1;
+    padding: var(--s-4);
+    border: 1px solid #2a2a2a;
+    background: transparent;
+    color: #ededed;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: var(--r);
+    cursor: pointer;
+    font-family: inherit;
+    transition: background var(--d-fast), border-color var(--d-fast), transform var(--d-fast);
+  }
+  .tm-btn:active { transform: translateY(1px); }
+  .tm-btn.primary {
+    background: #ededed;
+    color: #0a0a0a;
+    border-color: #ededed;
+  }
+  .tm-btn.primary:active { background: #cfcfcf; }
+
+  /* ================================ 打卡：segment / 月度 / 点阵 ================================ */
+  .segment {
+    display: inline-flex;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px;
+    background: var(--bg-elev);
+    margin-bottom: var(--s-4);
+  }
+  .segment button {
+    padding: 6px 14px;
+    border: none;
+    background: transparent;
+    color: var(--gray);
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 999px;
+    font-family: inherit;
+    transition: background var(--d-fast), color var(--d-fast);
+  }
+  .segment button.active { background: var(--ink); color: var(--bg); }
+
+  .month-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--s-3);
+    margin-bottom: var(--s-5);
+  }
+  .month-stats .stat-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    padding: var(--s-4);
+    box-shadow: var(--card-shadow);
+  }
+  .month-stats .stat-card .label { display: block; }
+  .month-stats .stat-card .num {
+    font-size: 36px;
+    font-weight: 200;
+    line-height: 1;
+    margin-top: var(--s-3);
+    letter-spacing: -0.02em;
+  }
+  .month-stats .stat-card .meta {
+    font-size: 11px;
+    color: var(--gray);
+    margin-top: var(--s-2);
+    letter-spacing: 0.04em;
+  }
+
+  .habit-stat { margin-bottom: var(--s-5); }
+  .habit-stat .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--s-3);
+    gap: var(--s-3);
+  }
+  .habit-stat .header .name { font-size: 15px; font-weight: 600; }
+  .habit-stat .header .meta {
+    font-size: 11px;
+    color: var(--gray);
+    letter-spacing: 0.04em;
+  }
+
+  .dot-grid-wrap {
+    overflow-x: auto;
+    padding-bottom: var(--s-2);
+    direction: rtl; /* 滚动条默认贴右（最近的日期） */
+  }
+  .dot-grid-wrap::-webkit-scrollbar { height: 4px; }
+  .dot-grid-wrap::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
+  .dot-grid {
+    display: grid;
+    grid-template-rows: repeat(7, 10px);
+    grid-auto-flow: column;
+    grid-auto-columns: 10px;
+    gap: 3px;
+    direction: ltr;
+  }
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: var(--line-soft);
+  }
+  .dot.done   { background: var(--ink); }
+  .dot.future { visibility: hidden; }
+
+  /* ================================ 完成仪式（复用 .time-machine 容器） ================================ */
+  .ceremony-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    padding: 0 var(--s-3);
+  }
+  .ceremony-eyebrow {
+    font-size: var(--fs-label);
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #6b6b6b;
+    margin-bottom: var(--s-6);
+  }
+  .ceremony-line {
+    font-size: 22px;
+    font-weight: 200;
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    color: #ededed;
+    margin-bottom: var(--s-3);
+    opacity: 0;
+    transform: translateY(8px);
+    animation: ceremonyIn 0.8s var(--ease-out) forwards;
+  }
+  .ceremony-line.delay-0 { animation-delay: 0.05s; }
+  .ceremony-line.delay-1 { animation-delay: 0.45s; }
+  .ceremony-line.delay-2 { animation-delay: 0.85s; }
+  .ceremony-line.delay-3 { animation-delay: 1.25s; }
+  .ceremony-line.delay-4 { animation-delay: 1.65s; }
+  .ceremony-line.delay-5 { animation-delay: 2.05s; }
+  .ceremony-promise {
+    font-size: 28px;
+    font-weight: 200;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    color: #ffffff;
+    margin-top: var(--s-6);
+    opacity: 0;
+    animation: ceremonyIn 1s var(--ease-out) 2.6s forwards;
+  }
+  @keyframes ceremonyIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ================================ 承诺句首屏闪现（0.8s） ================================ */
+  .promise-flash {
+    position: fixed;
+    inset: 0;
+    background: #0a0a0a;
+    color: #ededed;
+    z-index: 400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--s-7);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 320ms ease;
+  }
+  .promise-flash.show { opacity: 1; }
+  .promise-flash-text {
+    font-size: 28px;
+    font-weight: 200;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+    max-width: 320px;
+  }
+
+  /* ================================ 周日提醒条 ================================ */
+  .sunday-bar {
+    background: var(--ink);
+    color: var(--bg);
+    margin: 0 var(--s-5) var(--s-4);
+    padding: var(--s-3) var(--s-4);
+    border-radius: var(--r);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: var(--card-shadow);
+    transition: transform var(--d-fast);
+  }
+  .sunday-bar:active { transform: translateY(1px); }
+  .sunday-bar .dismiss {
+    background: transparent;
+    border: none;
+    color: var(--bg);
+    opacity: 0.6;
+    font-size: 20px;
+    line-height: 1;
+    padding: 0 4px;
+    font-family: inherit;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============== Splash / 登录页 ============== -->
+<div class="splash" id="splash">
+  <div class="brand">Life of Pi</div>
+  <p class="quote">把"想要变好"<br/>变成可观察的日常</p>
+  <form class="splash-form" id="splashForm">
+    <input class="field" id="splashName" placeholder="你的名字（任意昵称即可）" autocomplete="off" />
+    <button class="btn btn-block" type="submit">开始</button>
+  </form>
+</div>
+
+<!-- ============== App ============== -->
+<div class="app" id="app">
+
+  <!-- 倒计时 -->
+  <section class="page" id="page-countdown">
+    <div class="topbar">
+      <div>
+        <h1>倒计时</h1>
+        <div class="subtitle">钉住未来的自己</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" data-action="toggleTheme" aria-label="切换主题"></button>
+      </div>
+    </div>
+    <div id="countdownList"></div>
+  </section>
+
+  <!-- 打卡 -->
+  <section class="page" id="page-checkin">
+    <div class="topbar">
+      <div>
+        <h1>打卡</h1>
+        <div class="subtitle" id="checkinSubtitle">今日 0 / 0</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" data-action="toggleTheme" aria-label="切换主题"></button>
+      </div>
+    </div>
+    <div id="checkinList"></div>
+  </section>
+
+  <!-- 认知 -->
+  <section class="page" id="page-cognition">
+    <div class="topbar">
+      <div>
+        <h1>认知</h1>
+        <div class="subtitle">想到什么记什么</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" data-action="timeMachine" aria-label="时光机" title="时光机"></button>
+        <button class="icon-btn" data-action="toggleTheme" aria-label="切换主题"></button>
+      </div>
+    </div>
+    <div id="cognitionList"></div>
+  </section>
+
+  <!-- 复盘 -->
+  <section class="page" id="page-review">
+    <div class="topbar">
+      <div>
+        <h1>复盘</h1>
+        <div class="subtitle">写给自己看</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" data-action="toggleTheme" aria-label="切换主题"></button>
+      </div>
+    </div>
+    <div id="reviewList"></div>
+  </section>
+
+  <!-- 复盘报告页（不在 TABS 里，由 enter/exitReviewReport 控制 active） -->
+  <section class="page" id="page-review-report">
+    <div class="report-bar" id="reportBar">
+      <button class="icon-text-btn" data-action="closeReport" aria-label="返回">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <span>返回</span>
+      </button>
+      <button class="icon-text-btn" data-action="exportReport" aria-label="导出长图">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 8l5-5 5 5M5 21h14"/></svg>
+        <span>导出</span>
+      </button>
+    </div>
+    <div id="reportBody"></div>
+  </section>
+
+  <!-- 倒计时详情页（不在 TABS 里，由 enter/exitCountdownDetail 控制 active） -->
+  <section class="page" id="page-countdown-detail">
+    <div class="detail-bar">
+      <button class="icon-text-btn" data-action="exitDetail" aria-label="返回">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <span>返回</span>
+      </button>
+      <button class="icon-text-btn" data-action="completeCountdown">
+        <span>完成</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+    <div id="detailBody"></div>
+  </section>
+
+  <button class="fab" id="fab" aria-label="新建"></button>
+
+  <nav class="tabbar" id="tabbar"></nav>
+</div>
+
+<!-- ============== Modal ============== -->
+<div class="modal" id="modal" role="dialog" aria-modal="true">
+  <div class="modal-inner">
+    <button class="close" data-action="closeModal" aria-label="关闭">×</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- ============== 时光机覆盖层（全屏黑底，z-index 高于 modal） ============== -->
+<div class="time-machine" id="timeMachine" role="dialog" aria-modal="true" aria-label="时光机">
+  <div class="tm-bar">
+    <span class="tm-brand">Time Machine</span>
+    <button class="tm-close" data-action="closeTimeMachine" aria-label="关闭">×</button>
+  </div>
+  <div class="tm-content" id="tmContent"></div>
+  <div class="tm-actions" id="tmActions"></div>
+</div>
+
+<!-- ============== 完成仪式（复用 .time-machine 容器，独立元素以保留时光机不被打断） ============== -->
+<div class="time-machine" id="ceremony" role="dialog" aria-modal="true" aria-label="完成仪式">
+  <div class="tm-bar">
+    <span class="tm-brand" id="ceremonyBrand">Ceremony</span>
+    <button class="tm-close" data-action="closeCeremony" aria-label="关闭">×</button>
+  </div>
+  <div class="ceremony-content" id="ceremonyBody"></div>
+  <div class="tm-actions">
+    <button class="tm-btn" data-action="closeCeremony">再走一段</button>
+    <button class="tm-btn primary" data-action="confirmComplete">完成它</button>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+ *  Life of Pi  —  Frame v0.1
+ *  本文件是「框架版」：4 tab 骨架 + 主题切换 + DB 抽象 + 占位入口
+ *  详细向导 / 报告页 / 时光机 / 仪式页 留给后续迭代
+ * ================================================================ */
+
+/* ===== 1. 数据访问层（namespace 隔离） =====
+ * 即使在单文件里也走 db.<entity>.list/add/del/update。
+ * 后续要换 IndexedDB 或远端同步，只动 makeStore 内部。 */
+
+const STORAGE_KEYS = {
+  schema:     'lop:schema_version',
+  countdowns: 'lop:countdowns',
+  habits:     'lop:habits',
+  checkins:   'lop:checkins',
+  cognitions: 'lop:cognitions',
+  reviews:    'lop:reviews',
+  settings:   'lop:settings',
+};
+const SCHEMA_VERSION = 1;
+
+/* ===== Migration hook =====
+ * 当 SCHEMA_VERSION 提升时，在此处补 if (curr < 2) { ... } 类逻辑。 */
+function migrate() {
+  const curr = parseInt(localStorage.getItem(STORAGE_KEYS.schema) || '0', 10);
+  if (curr === SCHEMA_VERSION) return;
+  // if (curr < 2) { /* migrate v1 → v2 */ }
+  localStorage.setItem(STORAGE_KEYS.schema, String(SCHEMA_VERSION));
+}
+
+function uuid() {
+  return 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function makeStore(key) {
+  return {
+    list() {
+      try { return JSON.parse(localStorage.getItem(key) || '[]'); }
+      catch { return []; }
+    },
+    save(arr) { localStorage.setItem(key, JSON.stringify(arr)); },
+    add(item) {
+      const arr = this.list();
+      const rec = { id: uuid(), createdAt: Date.now(), ...item };
+      arr.push(rec);
+      this.save(arr);
+      return rec;
+    },
+    update(id, patch) {
+      const arr = this.list();
+      const i = arr.findIndex(x => x.id === id);
+      if (i < 0) return null;
+      arr[i] = { ...arr[i], ...patch };
+      this.save(arr);
+      return arr[i];
+    },
+    del(id) {
+      this.save(this.list().filter(x => x.id !== id));
+    },
+    get(id) {
+      return this.list().find(x => x.id === id) || null;
+    },
+  };
+}
+
+const db = {
+  countdowns: makeStore(STORAGE_KEYS.countdowns),
+  habits:     makeStore(STORAGE_KEYS.habits),
+  checkins:   makeStore(STORAGE_KEYS.checkins),
+  cognitions: makeStore(STORAGE_KEYS.cognitions),
+  reviews:    makeStore(STORAGE_KEYS.reviews),
+  settings: {
+    get() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.settings) || '{}'); }
+      catch { return {}; }
+    },
+    set(patch) {
+      const merged = { ...this.get(), ...patch };
+      localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(merged));
+      return merged;
+    },
+  },
+};
+
+/* ===== 2. 内联 SVG 图标（零 CDN） ===== */
+const icons = {
+  sun:    () => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4l1.4-1.4M17 7l1.4-1.4"/></svg>`,
+  moon:   () => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`,
+  clock:  () => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`,
+  check:  () => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>`,
+  bulb:   () => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4"/><path d="M12 2a6 6 0 0 0-3 11c0 2 1 3 1 4h4c0-1 1-2 1-4a6 6 0 0 0-3-11z"/></svg>`,
+  pen:    () => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6L8 22H2v-6z"/><path d="M13 5l6 6"/></svg>`,
+  timeM:  () => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg>`,
+  plus:   () => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,
+};
+
+/* ===== 3. 主题 ===== */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.querySelectorAll('[data-action="toggleTheme"]').forEach(el => {
+    el.innerHTML = theme === 'dark' ? icons.sun() : icons.moon();
+    el.title = theme === 'dark' ? '切换到浅色' : '切换到深色';
+  });
+}
+function toggleTheme() {
+  const next = (db.settings.get().theme === 'dark') ? 'light' : 'dark';
+  db.settings.set({ theme: next });
+  applyTheme(next);
+}
+
+/* ===== 4. 路由 / Tab 系统 =====
+ * 注册一个新 tab 只需：
+ *   1) 往 TABS 加一项
+ *   2) 在 HTML 加一个 .page#page-<id>
+ *   3) 实现 render<Foo>()
+ * switchTab() 是统一切换路径。 */
+const TABS = [
+  { id: 'countdown',  label: '倒计时', icon: icons.clock, render: renderCountdowns },
+  { id: 'checkin',    label: '打卡',   icon: icons.check, render: renderCheckins   },
+  { id: 'cognition',  label: '认知',   icon: icons.bulb,  render: renderCognitions },
+  { id: 'review',     label: '复盘',   icon: icons.pen,   render: renderReviews    },
+];
+let currentTab = 'countdown';
+
+function renderTabbar() {
+  const bar = document.getElementById('tabbar');
+  bar.innerHTML = TABS.map(t => `
+    <button data-tab="${t.id}" class="${t.id === currentTab ? 'active' : ''}">
+      ${t.icon()}
+      <span>${t.label}</span>
+    </button>`).join('');
+  bar.querySelectorAll('button').forEach(b => {
+    b.addEventListener('click', () => switchTab(b.dataset.tab));
+  });
+}
+function switchTab(id) {
+  if (!TABS.find(t => t.id === id)) return;
+  // 若处于详情页 / 报告页，先退出全屏态恢复 fab/tabbar
+  if (detailContext || reportContext) {
+    detailContext = null;
+    reportContext = null;
+    exitFullPage();
+  }
+  currentTab = id;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  renderTabbar();
+  const tab = TABS.find(t => t.id === id);
+  tab.render && tab.render();
+}
+
+/* ===== 5. 工具 ===== */
+function fmtDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function todayStr() { return fmtDate(new Date()); }
+function fmtTime(ts) {
+  const d = new Date(ts);
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+const TAGS = {
+  think:  { icon: '💡', label: '想法',  cls: 't-think'  },
+  mood:   { icon: '😶', label: '心情',  cls: 't-mood'   },
+  quote:  { icon: '📖', label: '摘录',  cls: 't-quote'  },
+  lesson: { icon: '⚠️', label: '教训',  cls: 't-lesson' },
+  goal:   { icon: '🎯', label: '目标',  cls: 't-goal'   },
+};
+
+/* ===== UI helpers：详情/报告页和向导通用 ===== */
+
+let _reportScrollCleanup = null;
+
+/* 进入一个全屏 .page（详情 / 报告）：隐藏 fab，可选隐藏 tabbar，回顶 */
+function enterFullPage(pageId, { hideTabbar = false } = {}) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  document.getElementById('fab').style.display = 'none';
+  if (hideTabbar) document.getElementById('tabbar').style.display = 'none';
+  window.scrollTo(0, 0);
+}
+
+/* 退出全屏 .page：恢复 fab/tabbar，清理可能挂着的滚动监听 */
+function exitFullPage() {
+  if (_reportScrollCleanup) {
+    _reportScrollCleanup();
+    _reportScrollCleanup = null;
+  }
+  document.getElementById('fab').style.display = '';
+  document.getElementById('tabbar').style.display = '';
+}
+
+/* 向导「下一步」按钮通用绑定：data-go 为目标 step 的 element id，smooth scroll + focus 第一个可输入控件 */
+function wireWizardSteps(form) {
+  form.querySelectorAll('[data-go]').forEach(b => {
+    b.addEventListener('click', () => {
+      const target = document.getElementById(b.dataset.go);
+      if (!target) return;
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => {
+        const f = target.querySelector('input:not([type="hidden"]),textarea');
+        if (f) f.focus({ preventScroll: true });
+      }, 360);
+    });
+  });
+}
+
+/* ===== 6. 渲染函数（每模块独立） ===== */
+
+function renderCountdowns() {
+  const list = db.countdowns.list();
+  const el = document.getElementById('countdownList');
+  if (!list.length) {
+    el.innerHTML = `
+      <div class="empty">
+        <span class="label">还没有倒计时</span>
+        <p>点击右下角 + 钉一个未来的目标。<br/>不显示「还剩多少天」，只显示「已经走了多少天」。</p>
+      </div>`;
+    return;
+  }
+  const now = Date.now();
+  el.innerHTML = list.map(c => {
+    const start = c.createdAt;
+    const end   = new Date(c.targetDate + 'T23:59:59').getTime();
+    const total = Math.max(1, Math.ceil((end - start) / 86400000));
+    const passed = Math.max(0, Math.min(total, Math.ceil((now - start) / 86400000)));
+    const pct = Math.min(100, (passed / total) * 100);
+    return `
+      <div class="card cd-card" data-id="${c.id}">
+        <div class="row-between">
+          <span class="label">已经走了</span>
+          <span class="label">${passed} / ${total}</span>
+        </div>
+        <div class="name">${escapeHtml(c.name)}</div>
+        <div class="row-between" style="align-items:flex-end">
+          <span class="big-num">${passed}</span>
+          <span class="label">天</span>
+        </div>
+        <div class="date">目标日 · ${escapeHtml(c.targetDate)}</div>
+        <div class="progress"><span style="width:${pct}%"></span></div>
+      </div>`;
+  }).join('');
+  el.querySelectorAll('.cd-card').forEach(card => {
+    card.addEventListener('click', () => enterCountdownDetail(card.dataset.id));
+  });
+}
+
+let _checkinMode = 'today'; // 'today' | 'stats'
+
+function renderCheckins() {
+  const habits = db.habits.list();
+  const today = todayStr();
+  const allChecks = db.checkins.list();
+  const todayChecks = allChecks.filter(c => c.date === today);
+  const doneCount = todayChecks.filter(c => c.completed).length;
+
+  document.getElementById('checkinSubtitle').textContent = _checkinMode === 'today'
+    ? `${today} · 今日 ${doneCount} / ${habits.length}`
+    : `本月统计 · ${habits.length} 个习惯`;
+
+  const el = document.getElementById('checkinList');
+  el.innerHTML = `
+    <div class="segment" id="checkinSeg">
+      <button data-mode="today"  class="${_checkinMode === 'today' ? 'active' : ''}">今日</button>
+      <button data-mode="stats"  class="${_checkinMode === 'stats' ? 'active' : ''}">统计</button>
+    </div>
+    <div id="checkinBody"></div>`;
+
+  el.querySelector('#checkinSeg').addEventListener('click', e => {
+    const b = e.target.closest('button[data-mode]');
+    if (!b) return;
+    _checkinMode = b.dataset.mode;
+    renderCheckins();
+  });
+
+  if (_checkinMode === 'today') renderCheckinsToday(habits, todayChecks, allChecks);
+  else renderCheckinsStats(habits, allChecks);
+}
+
+function renderCheckinsToday(habits, todayChecks, allChecks) {
+  const body = document.getElementById('checkinBody');
+  if (!habits.length) {
+    body.innerHTML = `
+      <div class="empty">
+        <span class="label">还没有习惯</span>
+        <p>点击 + 添加一个。<br/>关键不是"做完美"，是"做到了"——把门槛降到不会拒绝。</p>
+      </div>`;
+    return;
+  }
+  body.innerHTML = `
+    <div class="card" style="padding:0 24px">
+      ${habits.map(h => {
+        const chk = todayChecks.find(c => c.habitId === h.id);
+        const done = !!(chk && chk.completed);
+        const streak = computeStreak(h.id, allChecks);
+        return `
+          <div class="checkin-row ${done ? 'done' : ''}" data-habit="${h.id}">
+            <div class="checkbox"></div>
+            <div>
+              <div class="name">${escapeHtml(h.name)}</div>
+              <div class="streak">${streak > 0 ? '🔥 ' + streak + ' 天' : '今天首次'}${h.minStart ? ' · ' + escapeHtml(h.minStart) : ''}</div>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>`;
+  body.querySelectorAll('.checkin-row').forEach(row => {
+    row.addEventListener('click', () => toggleCheckin(row.dataset.habit));
+  });
+}
+
+function renderCheckinsStats(habits, allChecks) {
+  const body = document.getElementById('checkinBody');
+  if (!habits.length) {
+    body.innerHTML = `
+      <div class="empty">
+        <span class="label">还没数据</span>
+        <p>添加几个习惯后，这里会显示 365 天点阵和月度数字。</p>
+      </div>`;
+    return;
+  }
+
+  const m = computeMonthStats(habits, allChecks);
+  const longest = habits.reduce((mx, h) => Math.max(mx, computeStreak(h.id, allChecks)), 0);
+
+  const dotsHtml = habits.map(h => {
+    const dots = buildDots(h.id, allChecks, 365);
+    const streak = computeStreak(h.id, allChecks);
+    return `
+      <div class="habit-stat">
+        <div class="header">
+          <span class="name">${escapeHtml(h.name)}</span>
+          <span class="meta">🔥 ${streak} · ${dots.doneCount} / 365</span>
+        </div>
+        <div class="dot-grid-wrap">
+          <div class="dot-grid">${dots.html}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="month-stats">
+      <div class="stat-card">
+        <span class="label">本月完成率</span>
+        <div class="num">${m.completion}%</div>
+        <div class="meta">${m.done} 次 · ${m.elapsed}/${m.days} 天</div>
+      </div>
+      <div class="stat-card">
+        <span class="label">最长连击</span>
+        <div class="num">${longest}</div>
+        <div class="meta">天</div>
+      </div>
+    </div>
+    <div class="dotted">· · · · · · · ·</div>
+    ${dotsHtml}`;
+}
+
+/* 365 天点阵 HTML（按周排，每列一周，行=周一..周日） */
+function buildDots(habitId, allChecks, days) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  // 取从今天往前 days 天，对齐到包含今天的那周的周日
+  const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay(); // 周日=7, 周一=1
+  // 我们让 grid 列从最早周一起，最后一列是这周
+  const totalWeeks = Math.ceil(days / 7) + 1;
+  const totalCells = totalWeeks * 7;
+
+  const doneSet = new Set(
+    allChecks.filter(c => c.habitId === habitId && c.completed).map(c => c.date)
+  );
+
+  // 第一格的日期：今天 - (totalCells - dayOfWeek) 天
+  const start = new Date(today);
+  start.setDate(today.getDate() - (totalCells - dayOfWeek));
+
+  let html = '';
+  let doneCount = 0;
+  for (let i = 0; i < totalCells; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    const ds = fmtDate(d);
+    if (d > today) {
+      html += `<div class="dot future"></div>`;
+    } else if (doneSet.has(ds)) {
+      html += `<div class="dot done" title="${ds}"></div>`;
+      doneCount++;
+    } else {
+      html += `<div class="dot" title="${ds}"></div>`;
+    }
+  }
+  return { html, doneCount };
+}
+
+function computeMonthStats(habits, allChecks) {
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  monthStart.setHours(0, 0, 0, 0);
+  const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const elapsed = now.getDate();
+
+  const monthDates = new Set();
+  for (let i = 0; i < elapsed; i++) {
+    const d = new Date(monthStart);
+    d.setDate(monthStart.getDate() + i);
+    monthDates.add(fmtDate(d));
+  }
+  const done = allChecks.filter(c =>
+    c.completed && monthDates.has(c.date)
+  ).length;
+  const totalSlots = habits.length * elapsed;
+  const completion = totalSlots > 0 ? Math.round((done / totalSlots) * 100) : 0;
+  return { completion, done, elapsed, days };
+}
+
+function computeStreak(habitId, checks) {
+  const dates = new Set(
+    checks.filter(c => c.habitId === habitId && c.completed).map(c => c.date)
+  );
+  let streak = 0;
+  const d = new Date();
+  while (dates.has(fmtDate(d))) {
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+}
+
+function toggleCheckin(habitId) {
+  const today = todayStr();
+  const all = db.checkins.list();
+  const existing = all.find(c => c.date === today && c.habitId === habitId);
+  if (existing) {
+    db.checkins.update(existing.id, { completed: !existing.completed });
+  } else {
+    db.checkins.add({ habitId, date: today, completed: true });
+  }
+  renderCheckins();
+}
+
+function renderCognitions() {
+  const list = db.cognitions.list().sort((a, b) => b.createdAt - a.createdAt);
+  const el = document.getElementById('cognitionList');
+  if (!list.length) {
+    el.innerHTML = `
+      <div class="empty">
+        <span class="label">空空如也</span>
+        <p>不强制每天写。<br/>想到一句记一句，时间会让它有厚度。</p>
+      </div>`;
+    return;
+  }
+  // 按日期分组
+  const groups = new Map();
+  list.forEach(c => {
+    const key = fmtDate(new Date(c.createdAt));
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(c);
+  });
+  el.innerHTML = [...groups.entries()].map(([date, items]) => `
+    <div class="cog-group">
+      <span class="label">${date}</span>
+      ${items.map(c => {
+        const t = TAGS[c.tag] || TAGS.think;
+        return `
+          <div class="card cog-card ${t.cls}">
+            <div class="meta">
+              <span>${fmtTime(c.createdAt)}</span>
+              <span class="tag-pill">${t.icon} ${t.label}</span>
+            </div>
+            <div class="body">${escapeHtml(c.content)}</div>
+          </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+function renderReviews() {
+  const list = db.reviews.list();
+  const types = [
+    { key: 'week',  label: '周复盘' },
+    { key: 'month', label: '月复盘' },
+    { key: 'year',  label: '年复盘' },
+  ];
+  const el = document.getElementById('reviewList');
+  el.innerHTML = `
+    ${types.map(t => {
+      const items = list.filter(r => r.type === t.key).sort((a,b) => b.createdAt - a.createdAt);
+      const recent = items.slice(0, 3);
+      return `
+        <div class="card review-block">
+          <div class="row-between" style="align-items:flex-start">
+            <div>
+              <span class="label">${t.label}</span>
+              <div class="num">${items.length}</div>
+            </div>
+            <span class="label" style="margin-top:4px">累计</span>
+          </div>
+          ${recent.length ? `
+            <div class="dotted" style="margin:${'var(--s-4) 0 var(--s-2)'}">· · · ·</div>
+            <div class="review-history">
+              ${recent.map(rv => `
+                <div class="review-item" data-action="openReport" data-id="${rv.id}">
+                  <span class="when">${fmtMD(rv.createdAt)}</span>
+                  <span class="what">${escapeHtml(rv.focus || rv.lesson || '—')}</span>
+                </div>`).join('')}
+            </div>` : ''}
+          <button class="btn btn-block start-btn" data-action="newReview" data-type="${t.key}">
+            ${items.length ? '开始本期复盘' : '开始第一次'}
+          </button>
+        </div>`;
+    }).join('')}
+    <div class="dotted">· · · · · · · ·</div>
+    <div class="empty">
+      <p style="font-size:13px">复盘不打分，不评级。<br/>「写下即放下」。</p>
+    </div>`;
+}
+
+/* ===== 7. Modal ===== */
+function openModal(html) {
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modal').classList.add('active');
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+}
+
+/* ===== 8. FAB —— 极简快速新建（详细 5 步向导留给后续） ===== */
+function handleFab() {
+  const fns = {
+    countdown: openNewCountdown,
+    checkin:   openNewHabit,
+    cognition: openNewCognition,
+    review:    () => openReviewPlaceholder('week'),
+  };
+  (fns[currentTab] || (() => {}))();
+}
+
+function openNewCountdown() {
+  openModal(`
+    <h2>新建倒计时</h2>
+    <p class="lede">5 步极简向导 · 慢慢填，每一项都重要</p>
+
+    <form id="formCd" class="wiz">
+      <!-- ① -->
+      <div class="wiz-step" id="ws-1">
+        <span class="step-num">第 1 步 / 5</span>
+        <h3 class="ask">目标是什么？</h3>
+        <input class="field field-lg" name="name" placeholder="想达成的事" required autocomplete="off" />
+        <div class="actions">
+          <button type="button" class="btn btn-block" data-go="ws-2">下一步</button>
+        </div>
+      </div>
+
+      <!-- ② -->
+      <div class="wiz-step" id="ws-2">
+        <span class="step-num">第 2 步 / 5</span>
+        <h3 class="ask">截止日期？</h3>
+        <div class="date-trio">
+          <input class="field y" name="y" placeholder="yyyy" maxlength="4" inputmode="numeric" pattern="\\d{4}" required />
+          <span class="sep">/</span>
+          <input class="field m" name="m" placeholder="mm" maxlength="2" inputmode="numeric" pattern="\\d{1,2}" required />
+          <span class="sep">/</span>
+          <input class="field d" name="d" placeholder="dd" maxlength="2" inputmode="numeric" pattern="\\d{1,2}" required />
+        </div>
+        <div class="chip-row" id="quickDays">
+          <button type="button" class="chip" data-days="30">30 天后</button>
+          <button type="button" class="chip" data-days="100">100 天后</button>
+          <button type="button" class="chip" data-days="365">365 天后</button>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn btn-block" data-go="ws-3">下一步</button>
+        </div>
+      </div>
+
+      <!-- ③ -->
+      <div class="wiz-step" id="ws-3">
+        <span class="step-num">第 3 步 / 5</span>
+        <h3 class="ask">为什么重要？</h3>
+        <textarea class="field field-multi" name="why" rows="5" placeholder="写给未来的自己，3-5 句话"></textarea>
+        <p class="hint">完成后，每次打开这个倒计时会随机抽一句作为提醒。</p>
+        <div class="actions">
+          <button type="button" class="btn btn-block" data-go="ws-4">下一步</button>
+        </div>
+      </div>
+
+      <!-- ④ -->
+      <div class="wiz-step" id="ws-4">
+        <span class="step-num">第 4 步 / 5</span>
+        <h3 class="ask">如果完成会怎样？</h3>
+        <input class="field field-lg" name="vision" placeholder="想象那一刻的画面" autocomplete="off" />
+        <div class="actions">
+          <button type="button" class="btn btn-block" data-go="ws-5">下一步</button>
+        </div>
+      </div>
+
+      <!-- ⑤ -->
+      <div class="wiz-step" id="ws-5">
+        <span class="step-num">第 5 步 / 5</span>
+        <h3 class="ask">承诺一句话</h3>
+        <input class="field field-promise" name="promise" placeholder="我会…" autocomplete="off" />
+        <p class="hint">这句会在每天打开 App 第一屏闪现 0.8 秒。</p>
+        <div class="actions">
+          <button class="btn btn-block" type="submit">钉住这个倒计时</button>
+        </div>
+      </div>
+    </form>`);
+
+  const form = document.getElementById('formCd');
+  wireWizardSteps(form);
+
+  // 快捷日期胶囊 → 填充三段输入
+  const quick = document.getElementById('quickDays');
+  quick.addEventListener('click', e => {
+    const c = e.target.closest('.chip');
+    if (!c) return;
+    const d = new Date();
+    d.setDate(d.getDate() + parseInt(c.dataset.days, 10));
+    form.elements.y.value = d.getFullYear();
+    form.elements.m.value = String(d.getMonth() + 1).padStart(2, '0');
+    form.elements.d.value = String(d.getDate()).padStart(2, '0');
+    quick.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+  });
+
+  // 提交：拼日期 → 写库 → 渲染
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const y = String(fd.get('y') || '').padStart(4, '0');
+    const m = String(fd.get('m') || '').padStart(2, '0');
+    const d = String(fd.get('d') || '').padStart(2, '0');
+    db.countdowns.add({
+      name:       (fd.get('name') || '').trim(),
+      targetDate: `${y}-${m}-${d}`,
+      why:        (fd.get('why') || '').trim(),
+      vision:     (fd.get('vision') || '').trim(),
+      promise:    (fd.get('promise') || '').trim(),
+    });
+    closeModal();
+    renderCountdowns();
+  });
+}
+
+function openNewHabit() {
+  openModal(`
+    <h2>新增习惯</h2>
+    <p class="lede">5 步 · 关键不是"做完美"，是"做到了"</p>
+
+    <form id="formHb" class="wiz">
+      <!-- ① 习惯名 -->
+      <div class="wiz-step" id="hs-1">
+        <span class="step-num">第 1 步 / 5</span>
+        <h3 class="ask">想养成什么习惯？</h3>
+        <input class="field field-lg" name="name" placeholder="一句话" required autocomplete="off" />
+        <div class="actions"><button type="button" class="btn btn-block" data-go="hs-2">下一步</button></div>
+      </div>
+
+      <!-- ② 频率 -->
+      <div class="wiz-step" id="hs-2">
+        <span class="step-num">第 2 步 / 5</span>
+        <h3 class="ask">多久做一次？</h3>
+        <div class="chip-row" data-chip-name="frequency">
+          <button type="button" class="chip" data-value="daily">每天</button>
+          <button type="button" class="chip" data-value="weekly5">每周 5 天</button>
+          <button type="button" class="chip" data-value="weekly3">每周 3 天</button>
+          <button type="button" class="chip" data-value="interval2">每两天一次</button>
+        </div>
+        <input type="hidden" name="frequency" value="daily" />
+        <div class="actions"><button type="button" class="btn btn-block" data-go="hs-3">下一步</button></div>
+      </div>
+
+      <!-- ③ 触发时刻 -->
+      <div class="wiz-step" id="hs-3">
+        <span class="step-num">第 3 步 / 5 · 可选</span>
+        <h3 class="ask">什么时候做？</h3>
+        <div class="chip-row" data-chip-name="trigger">
+          <button type="button" class="chip" data-value="morning">起床后</button>
+          <button type="button" class="chip" data-value="breakfast">早饭后</button>
+          <button type="button" class="chip" data-value="evening">睡前</button>
+          <button type="button" class="chip" data-value="">不固定</button>
+        </div>
+        <input type="hidden" name="trigger" value="" />
+        <p class="hint">能让习惯有"挂钩点"，比定时间更容易成。</p>
+        <div class="actions"><button type="button" class="btn btn-block" data-go="hs-4">下一步</button></div>
+      </div>
+
+      <!-- ④ 最小启动 -->
+      <div class="wiz-step" id="hs-4">
+        <span class="step-num">第 4 步 / 5 · 关键</span>
+        <h3 class="ask">最低限度做什么算完成？</h3>
+        <input class="field field-lg" name="minStart" placeholder="比如：写一句 / 走出门 / 读一页" required autocomplete="off" />
+        <p class="hint">把"做完美"换成"做到了" —— 门槛降到不会拒绝的程度。</p>
+        <div class="actions"><button type="button" class="btn btn-block" data-go="hs-5">下一步</button></div>
+      </div>
+
+      <!-- ⑤ 失败处理 -->
+      <div class="wiz-step" id="hs-5">
+        <span class="step-num">第 5 步 / 5</span>
+        <h3 class="ask">中断了怎么办？</h3>
+        <div class="chip-row" data-chip-name="failPolicy">
+          <button type="button" class="chip" data-value="soft">80% 容错（推荐）</button>
+          <button type="button" class="chip" data-value="strict">严格 0 容错</button>
+        </div>
+        <input type="hidden" name="failPolicy" value="soft" />
+        <p class="hint">推荐 80% —— 允许周内有少数缺席，不重置连击。</p>
+        <div class="actions"><button class="btn btn-block" type="submit">添加</button></div>
+      </div>
+    </form>`);
+
+  const form = document.getElementById('formHb');
+  wireWizardSteps(form);
+
+  // 多个 chip-row：通用绑定
+  form.querySelectorAll('.chip-row[data-chip-name]').forEach(row => {
+    const name = row.dataset.chipName;
+    const hidden = form.elements[name];
+    const paint = () => row.querySelectorAll('.chip').forEach(c =>
+      c.classList.toggle('active', c.dataset.value === hidden.value));
+    paint();
+    row.addEventListener('click', e => {
+      const c = e.target.closest('.chip');
+      if (!c) return;
+      hidden.value = c.dataset.value;
+      paint();
+    });
+  });
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    db.habits.add({
+      name: (fd.get('name') || '').trim(),
+      frequency: fd.get('frequency') || 'daily',
+      trigger:   fd.get('trigger') || '',
+      minStart:  (fd.get('minStart') || '').trim(),
+      failPolicy: fd.get('failPolicy') || 'soft',
+    });
+    closeModal();
+    renderCheckins();
+  });
+}
+
+function openNewCognition() {
+  const tagBtns = Object.entries(TAGS)
+    .map(([k, v]) => `<button type="button" class="icon-btn" data-tag="${k}" title="${v.label}" style="font-size:16px;border-radius:999px;width:auto;padding:0 12px;height:32px">${v.icon} ${v.label}</button>`)
+    .join('');
+  openModal(`
+    <h2>随手记</h2>
+    <p class="lede">想到一句记一句</p>
+    <form id="formCg">
+      <div class="form-row">
+        <input class="field" name="content" placeholder="..." autofocus required />
+      </div>
+      <div class="form-row" style="display:flex;flex-wrap:wrap;gap:8px" id="cgTags">
+        ${tagBtns}
+      </div>
+      <input type="hidden" name="tag" value="think" />
+      <button class="btn btn-block" type="submit">保存</button>
+    </form>`);
+  const form = document.getElementById('formCg');
+  const hidden = form.querySelector('[name="tag"]');
+  const tagsBox = document.getElementById('cgTags');
+  function paint() {
+    tagsBox.querySelectorAll('button').forEach(b => {
+      const active = b.dataset.tag === hidden.value;
+      b.style.background = active ? 'var(--ink)' : 'var(--bg-elev)';
+      b.style.color = active ? 'var(--bg)' : 'var(--ink)';
+      b.style.borderColor = active ? 'var(--ink)' : 'var(--line)';
+    });
+  }
+  paint();
+  tagsBox.addEventListener('click', e => {
+    const btn = e.target.closest('[data-tag]');
+    if (!btn) return;
+    hidden.value = btn.dataset.tag;
+    paint();
+  });
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    db.cognitions.add({ content: fd.get('content'), tag: fd.get('tag') });
+    closeModal();
+    renderCognitions();
+  });
+}
+
+function openReviewPlaceholder(type) {
+  const labels = { week: '周', month: '月', year: '年' };
+  openModal(`
+    <h2>${labels[type] || ''}复盘</h2>
+    <p class="lede">本周得 / 本周失 / 一句话教训 / 下周一个焦点 —— 4 步流程下个版本接入</p>
+    <div style="margin-top:32px;padding:24px;border:1px solid var(--line);border-radius:12px;color:var(--gray);font-size:13px;line-height:1.7">
+      复盘报告页（全屏白底大字 + 签名行 + 导出长图）也留在下个迭代。<br/>
+      框架已就位：底层 db.reviews 已可读写，复盘流程实现后直接对接。
+    </div>`);
+}
+
+/* ===== 9. 时光机：抽 30/90/365 天前的认知 + 回响二选一 =====
+ * 回响存在认知记录的 echoes: [{ at, response: 'still'|'past' }] 字段上。
+ * 用一个 cohort 内最近 30 天没回响过的候选随机抽。
+ */
+let _tmCurrentId = null;
+
+function openTimeMachine() {
+  document.getElementById('timeMachine').classList.add('active');
+  renderTimeMachine();
+}
+
+function closeTimeMachine() {
+  document.getElementById('timeMachine').classList.remove('active');
+  _tmCurrentId = null;
+}
+
+function renderTimeMachine() {
+  const note = pickTimeMachineNote();
+  const content = document.getElementById('tmContent');
+  const actions = document.getElementById('tmActions');
+
+  if (!note) {
+    _tmCurrentId = null;
+    content.innerHTML = `
+      <div class="tm-empty">
+        <div class="tm-eyebrow">No Echo</div>
+        今天没有合适的回响。
+        <div class="hint">需要 30 / 90 / 365 天前左右的认知记录</div>
+      </div>`;
+    actions.innerHTML = `
+      <button class="tm-btn primary" data-action="closeTimeMachine">先放着</button>`;
+    return;
+  }
+
+  _tmCurrentId = note.id;
+  const tag = TAGS[note.tag] || TAGS.think;
+  content.innerHTML = `
+    <div class="tm-eyebrow">${note.rangeLabel} · 你写下…</div>
+    <div class="tm-text">${escapeHtml(note.content)}</div>
+    <div class="tm-tag-wrap"><span class="tm-tag">${tag.icon} ${tag.label}</span></div>`;
+  actions.innerHTML = `
+    <button class="tm-btn" data-action="echo" data-r="past">翻篇了</button>
+    <button class="tm-btn primary" data-action="echo" data-r="still">还在影响我</button>`;
+}
+
+/* 抽一条候选：从 30 → 90 → 一年 三档依次找，每档 ±tol 天 */
+function pickTimeMachineNote() {
+  const now = Date.now();
+  const D = 86400000;
+  const ranges = [
+    { mid: 30,  tol: 4,  label: '30 天前' },
+    { mid: 90,  tol: 7,  label: '90 天前' },
+    { mid: 365, tol: 14, label: '一年前'  },
+  ];
+  const all = db.cognitions.list();
+  for (const r of ranges) {
+    const lo = now - (r.mid + r.tol) * D;
+    const hi = now - (r.mid - r.tol) * D;
+    const cands = all.filter(c => {
+      if (c.createdAt < lo || c.createdAt > hi) return false;
+      // 30 天内回响过的不再重复抽
+      const echoedRecently = (c.echoes || []).some(e => now - e.at < 30 * D);
+      return !echoedRecently;
+    });
+    if (cands.length) {
+      const pick = cands[Math.floor(Math.random() * cands.length)];
+      return { ...pick, rangeLabel: r.label };
+    }
+  }
+  return null;
+}
+
+function recordEcho(response) {
+  if (!_tmCurrentId) return;
+  const c = db.cognitions.get(_tmCurrentId);
+  if (!c) return;
+  const echoes = (c.echoes || []).slice();
+  echoes.push({ at: Date.now(), response });
+  db.cognitions.update(_tmCurrentId, { echoes });
+  showToast(response === 'still' ? '记下了' : '让它过去吧');
+  // 抽下一条（间隔一点让 toast 能看见）
+  setTimeout(() => renderTimeMachine(), 600);
+}
+
+/* ===== 复盘 · 4 步向导 + 报告页 + 长图导出 ===== */
+
+const REVIEW_TYPE = {
+  week:  { unit: '本周', next: '下周', label: '周',  scale: '本周' },
+  month: { unit: '本月', next: '下月', label: '月',  scale: '本月' },
+  year:  { unit: '今年', next: '明年', label: '年',  scale: '今年' },
+};
+
+let reportContext = null; // 当前打开的 review id
+
+function openNewReview(type) {
+  const T = REVIEW_TYPE[type];
+  if (!T) return;
+  openModal(`
+    <h2>${T.label}复盘</h2>
+    <p class="lede">4 步 · 写给自己看</p>
+
+    <form id="formRv" class="wiz">
+      <!-- ① 得 -->
+      <div class="wiz-step" id="rs-1">
+        <span class="step-num">第 1 步 / 4 · ${T.unit}得</span>
+        <h3 class="ask">让你有底气的 3 件事</h3>
+        <input class="field field-lg" name="gain1" placeholder="第 1 件" required autocomplete="off" />
+        <input class="field field-lg" name="gain2" placeholder="第 2 件" required autocomplete="off" style="margin-top:16px" />
+        <input class="field field-lg" name="gain3" placeholder="第 3 件" required autocomplete="off" style="margin-top:16px" />
+        <div class="actions"><button type="button" class="btn btn-block" data-go="rs-2">下一步</button></div>
+      </div>
+
+      <!-- ② 失 -->
+      <div class="wiz-step" id="rs-2">
+        <span class="step-num">第 2 步 / 4 · ${T.unit}失</span>
+        <h3 class="ask">让你不安的 3 件事</h3>
+        <input class="field field-lg" name="loss1" placeholder="第 1 件" required autocomplete="off" />
+        <input class="field field-lg" name="loss2" placeholder="第 2 件" required autocomplete="off" style="margin-top:16px" />
+        <input class="field field-lg" name="loss3" placeholder="第 3 件" required autocomplete="off" style="margin-top:16px" />
+        <p class="hint">写下即放下 —— 这三条之后不会再回看。</p>
+        <div class="actions"><button type="button" class="btn btn-block" data-go="rs-3">下一步</button></div>
+      </div>
+
+      <!-- ③ 教训 -->
+      <div class="wiz-step" id="rs-3">
+        <span class="step-num">第 3 步 / 4 · 教训</span>
+        <h3 class="ask">一句话教训</h3>
+        <input class="field field-promise" name="lesson" placeholder="..." required autocomplete="off" />
+        <div class="actions"><button type="button" class="btn btn-block" data-go="rs-4">下一步</button></div>
+      </div>
+
+      <!-- ④ 焦点 -->
+      <div class="wiz-step" id="rs-4">
+        <span class="step-num">第 4 步 / 4 · ${T.next}焦点</span>
+        <h3 class="ask">${T.next}只做好这一件</h3>
+        <input class="field field-promise" name="focus" placeholder="${T.next}只做好这一件就值了" required autocomplete="off" />
+        <p class="hint">只能写一个，强制取舍。</p>
+        <div class="actions"><button class="btn btn-block" type="submit">完成复盘</button></div>
+      </div>
+    </form>`);
+
+  const form = document.getElementById('formRv');
+  wireWizardSteps(form);
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const rec = db.reviews.add({
+      type,
+      gain1: (fd.get('gain1') || '').trim(),
+      gain2: (fd.get('gain2') || '').trim(),
+      gain3: (fd.get('gain3') || '').trim(),
+      loss1: (fd.get('loss1') || '').trim(),
+      loss2: (fd.get('loss2') || '').trim(),
+      loss3: (fd.get('loss3') || '').trim(),
+      lesson: (fd.get('lesson') || '').trim(),
+      focus:  (fd.get('focus')  || '').trim(),
+    });
+    closeModal();
+    enterReviewReport(rec.id);
+  });
+}
+
+function enterReviewReport(reviewId) {
+  const r = db.reviews.get(reviewId);
+  if (!r) return;
+  reportContext = reviewId;
+  enterFullPage('page-review-report', { hideTabbar: true });
+  renderReviewReport(r);
+  // 滚动时给顶栏加边
+  const onScroll = () => {
+    document.getElementById('reportBar').classList.toggle('scrolled', window.scrollY > 4);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  _reportScrollCleanup = () => window.removeEventListener('scroll', onScroll);
+}
+
+function exitReviewReport() {
+  reportContext = null;
+  exitFullPage();
+  switchTab('review');
+}
+
+function renderReviewReport(r) {
+  const T = REVIEW_TYPE[r.type] || REVIEW_TYPE.week;
+  const idx  = reviewIndex(r);
+  const range = reviewDateRange(r);
+  const auto = buildAutoSection(r);
+  const name = (db.settings.get().name || 'You').trim() || 'You';
+
+  document.getElementById('reportBody').innerHTML = `
+    <div class="report-title">${T.label}复盘</div>
+    <div class="report-num">第 ${idx} 次 ${T.label}复盘</div>
+    <div class="report-range">${range}</div>
+
+    <section class="report-block">
+      <span class="label">${T.unit}得</span>
+      ${[r.gain1, r.gain2, r.gain3].filter(Boolean).map(g =>
+        `<p class="report-item">· ${escapeHtml(g)}</p>`).join('')}
+    </section>
+
+    <div class="dotted">· · · · · · · ·</div>
+
+    <section class="report-block">
+      <span class="label">${T.unit}失</span>
+      ${[r.loss1, r.loss2, r.loss3].filter(Boolean).map(l =>
+        `<p class="report-item">· ${escapeHtml(l)}</p>`).join('')}
+      <p class="hint" style="margin-top:0">写下即放下。</p>
+    </section>
+
+    <div class="dotted">· · · · · · · ·</div>
+
+    <section class="report-block">
+      <span class="label">一句话教训</span>
+      <p class="report-lesson">${escapeHtml(r.lesson || '—')}</p>
+    </section>
+
+    <section class="report-block">
+      <span class="label">${T.next}一个焦点</span>
+      <p class="report-focus">${escapeHtml(r.focus || '—')}</p>
+    </section>
+
+    <div class="dotted">· · · · · · · ·</div>
+
+    <section class="report-block">
+      <span class="label">数据回响</span>
+      ${auto}
+    </section>
+
+    <div class="dotted">· · · · · · · ·</div>
+
+    <div class="report-sign">— ${escapeHtml(name)} · 写于 ${dayLabel(r.createdAt)}</div>`;
+}
+
+/* 自动段：拉打卡 / 倒计时 / 认知 / 上次焦点 */
+function buildAutoSection(r) {
+  const end = r.createdAt;
+  const start = reviewWindowStart(r);
+  const inWindow = ts => ts >= start && ts <= end;
+
+  // 1) 打卡完成度（窗口内有完成 = 计入）
+  const habits = db.habits.list();
+  const checks = db.checkins.list().filter(c => {
+    const dt = new Date(c.date + 'T12:00:00').getTime();
+    return inWindow(dt) && c.completed;
+  });
+  const days = Math.max(1, Math.ceil((end - start) / 86400000));
+  const totalSlots = habits.length * days;
+  const completion = totalSlots > 0
+    ? Math.round((checks.length / totalSlots) * 100)
+    : null;
+
+  // 2) 倒计时进度
+  const cds = db.countdowns.list().map(c => {
+    const cStart = c.createdAt;
+    const cEnd = new Date(c.targetDate + 'T23:59:59').getTime();
+    const total  = Math.max(1, Math.ceil((cEnd - cStart) / 86400000));
+    const passed = Math.max(0, Math.min(total, Math.ceil((end - cStart) / 86400000)));
+    return { name: c.name, passed, total };
+  });
+
+  // 3) 高频认知 tag
+  const cogs = db.cognitions.list().filter(c => inWindow(c.createdAt));
+  const tagCount = {};
+  cogs.forEach(c => { tagCount[c.tag] = (tagCount[c.tag] || 0) + 1; });
+  const top = Object.entries(tagCount).sort((a,b) => b[1] - a[1])[0];
+
+  // 4) 上次焦点回响
+  const prev = db.reviews.list()
+    .filter(rv => rv.type === r.type && rv.id !== r.id && rv.createdAt < r.createdAt)
+    .sort((a,b) => b.createdAt - a.createdAt)[0];
+
+  const rows = [];
+  if (completion !== null) {
+    rows.push({ k: '本期打卡完成度', v: `${completion}% · ${checks.length} 次` });
+  }
+  cds.forEach(cd => {
+    rows.push({ k: cd.name, v: `${cd.passed} / ${cd.total} 天` });
+  });
+  if (top) {
+    const tag = TAGS[top[0]] || TAGS.think;
+    rows.push({ k: '认知里写得最多', v: `${tag.icon} ${tag.label} × ${top[1]}` });
+  }
+  if (prev && prev.focus) {
+    rows.push({ k: '上次焦点', v: prev.focus });
+  }
+
+  // 5) 时光机回响（窗口内的回响次数）
+  let still = 0, past = 0;
+  db.cognitions.list().forEach(c => {
+    (c.echoes || []).forEach(e => {
+      if (inWindow(e.at)) {
+        if (e.response === 'still') still++;
+        else past++;
+      }
+    });
+  });
+  if (still + past > 0) {
+    rows.push({ k: '时光机回响', v: `${still + past} 次 · 还在影响 ${still}` });
+  }
+
+  if (!rows.length) {
+    return `<p class="hint" style="margin:0">这段时间还没有可拉的数据。</p>`;
+  }
+  return rows.map(r => `
+    <div class="auto-row">
+      <span class="k">${escapeHtml(r.k)}</span>
+      <span class="v">${escapeHtml(r.v)}</span>
+    </div>`).join('');
+}
+
+/* 复盘的时间窗口起点（按 type） */
+function reviewWindowStart(r) {
+  const d = new Date(r.createdAt);
+  if (r.type === 'week') {
+    const day = d.getDay() === 0 ? 7 : d.getDay(); // 周一=1, 周日=7
+    const start = new Date(d);
+    start.setHours(0, 0, 0, 0);
+    start.setDate(d.getDate() - day + 1);
+    return start.getTime();
+  }
+  if (r.type === 'month') {
+    return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0, 0).getTime();
+  }
+  return new Date(d.getFullYear(), 0, 1, 0, 0, 0, 0).getTime();
+}
+
+/* 第几次 N */
+function reviewIndex(r) {
+  const sorted = db.reviews.list()
+    .filter(x => x.type === r.type)
+    .sort((a, b) => a.createdAt - b.createdAt);
+  return sorted.findIndex(x => x.id === r.id) + 1;
+}
+
+/* 时间范围文案 */
+function reviewDateRange(r) {
+  const d = new Date(r.createdAt);
+  if (r.type === 'week') {
+    const start = new Date(reviewWindowStart(r));
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return `${fmtYMD2(start)} — ${fmtYMD2(end)}`;
+  }
+  if (r.type === 'month') {
+    return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
+  return `${d.getFullYear()}`;
+}
+
+function fmtYMD2(d) {
+  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+}
+function fmtMD(ts) {
+  const d = new Date(ts);
+  return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+/* 签名行 "周日 21:30" */
+function dayLabel(ts) {
+  const d = new Date(ts);
+  const days = ['周日','周一','周二','周三','周四','周五','周六'];
+  return `${days[d.getDay()]} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+/* ===== 长图导出（canvas） =====
+ * 简化版：白底黑字按段堆叠，1080 宽自适应高，下载 PNG。
+ * 不追求 pixel-perfect，但是分享出去能看清。 */
+function exportReport() {
+  if (!reportContext) return;
+  const r = db.reviews.get(reportContext);
+  if (!r) return;
+  const T = REVIEW_TYPE[r.type];
+  const idx = reviewIndex(r);
+  const name = (db.settings.get().name || 'You').trim() || 'You';
+
+  const W = 1080;
+  const PAD = 96;
+  const FONT = '"PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,BlinkMacSystemFont,sans-serif';
+
+  const sections = [
+    { kind: 'eyebrow', text: T.label.toUpperCase() + ' REVIEW' },
+    { kind: 'title',   text: `第 ${idx} 次 ${T.label}复盘` },
+    { kind: 'meta',    text: reviewDateRange(r) },
+    { kind: 'gap', h: 60 },
+    { kind: 'block', label: T.unit + '得', items: [r.gain1, r.gain2, r.gain3].filter(Boolean) },
+    { kind: 'block', label: T.unit + '失', items: [r.loss1, r.loss2, r.loss3].filter(Boolean) },
+    { kind: 'block', label: '一句话教训', big: r.lesson },
+    { kind: 'block', label: T.next + '一个焦点', big: r.focus },
+    { kind: 'gap', h: 40 },
+    { kind: 'sign', text: `— ${name} · 写于 ${dayLabel(r.createdAt)}` },
+  ];
+
+  // 第一遍：测高
+  const probe = document.createElement('canvas').getContext('2d');
+  let H = PAD;
+  for (const s of sections) {
+    if (s.kind === 'eyebrow') {
+      probe.font = `700 22px ${FONT}`;
+      H += 22 * 1.4 + 32;
+    } else if (s.kind === 'title') {
+      probe.font = `700 56px ${FONT}`;
+      H += 56 * 1.2 + 16;
+    } else if (s.kind === 'meta') {
+      probe.font = `400 22px ${FONT}`;
+      H += 22 * 1.4;
+    } else if (s.kind === 'gap') {
+      H += s.h;
+    } else if (s.kind === 'block') {
+      probe.font = `700 18px ${FONT}`;
+      H += 18 * 1.4 + 24;
+      if (s.items) {
+        probe.font = `300 30px ${FONT}`;
+        for (const it of s.items) {
+          const lines = wrapText(probe, '· ' + it, W - PAD * 2);
+          H += lines.length * 30 * 1.5 + 8;
+        }
+      }
+      if (s.big) {
+        probe.font = `200 44px ${FONT}`;
+        const lines = wrapText(probe, s.big, W - PAD * 2);
+        H += lines.length * 44 * 1.4;
+      }
+      H += 64;
+    } else if (s.kind === 'sign') {
+      probe.font = `300 26px ${FONT}`;
+      H += 26 * 1.4;
+    }
+  }
+  H += PAD;
+
+  // 第二遍：绘制
+  const cv = document.createElement('canvas');
+  cv.width = W;
+  cv.height = Math.ceil(H);
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, cv.height);
+  ctx.textBaseline = 'alphabetic';
+
+  let y = PAD;
+  for (const s of sections) {
+    if (s.kind === 'eyebrow') {
+      ctx.fillStyle = '#6b6b6b';
+      ctx.font = `700 22px ${FONT}`;
+      // letter spacing 模拟：字符间插空格
+      ctx.fillText(s.text.split('').join(' '), PAD, y + 22);
+      y += 22 * 1.4 + 32;
+    } else if (s.kind === 'title') {
+      ctx.fillStyle = '#0a0a0a';
+      ctx.font = `700 56px ${FONT}`;
+      ctx.fillText(s.text, PAD, y + 56);
+      y += 56 * 1.2 + 16;
+    } else if (s.kind === 'meta') {
+      ctx.fillStyle = '#6b6b6b';
+      ctx.font = `400 22px ${FONT}`;
+      ctx.fillText(s.text, PAD, y + 22);
+      y += 22 * 1.4;
+    } else if (s.kind === 'gap') {
+      // 中线点状分割
+      ctx.fillStyle = '#6b6b6b';
+      ctx.font = `400 18px ${FONT}`;
+      ctx.fillText('· · · · · · · ·', PAD, y + 18);
+      y += s.h;
+    } else if (s.kind === 'block') {
+      ctx.fillStyle = '#6b6b6b';
+      ctx.font = `700 18px ${FONT}`;
+      ctx.fillText(s.label.split('').join(' '), PAD, y + 18);
+      y += 18 * 1.4 + 24;
+      if (s.items) {
+        ctx.fillStyle = '#1a1a1a';
+        ctx.font = `300 30px ${FONT}`;
+        for (const it of s.items) {
+          const lines = wrapText(ctx, '· ' + it, W - PAD * 2);
+          for (const line of lines) {
+            ctx.fillText(line, PAD, y + 30);
+            y += 30 * 1.5;
+          }
+          y += 8;
+        }
+      }
+      if (s.big) {
+        ctx.fillStyle = '#0a0a0a';
+        ctx.font = `200 44px ${FONT}`;
+        const lines = wrapText(ctx, s.big, W - PAD * 2);
+        for (const line of lines) {
+          ctx.fillText(line, PAD, y + 44);
+          y += 44 * 1.4;
+        }
+      }
+      y += 64;
+    } else if (s.kind === 'sign') {
+      ctx.fillStyle = '#6b6b6b';
+      ctx.font = `300 26px ${FONT}`;
+      const w = ctx.measureText(s.text).width;
+      ctx.fillText(s.text, (W - w) / 2, y + 26);
+      y += 26 * 1.4;
+    }
+  }
+
+  cv.toBlob(blob => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `Life_of_Pi_${r.type}_${fmtDate(new Date(r.createdAt))}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    showToast('已导出长图');
+  }, 'image/png');
+}
+
+/* 中文友好的逐字符换行 */
+function wrapText(ctx, text, maxWidth) {
+  const lines = [];
+  let line = '';
+  for (const ch of text) {
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxWidth && line) {
+      lines.push(line);
+      line = ch;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+/* ===== 倒计时详情页 + 跨模块联动 ===== */
+let detailContext = null; // 当前查看的倒计时 id；非 null 即处于详情态
+
+function enterCountdownDetail(id) {
+  const c = db.countdowns.get(id);
+  if (!c) return;
+  detailContext = id;
+  enterFullPage('page-countdown-detail');
+  renderCountdownDetail(c);
+}
+
+function exitCountdownDetail() {
+  detailContext = null;
+  exitFullPage();
+  switchTab('countdown'); // 回到列表（switchTab 自带 re-render）
+}
+
+function renderCountdownDetail(c) {
+  const now = Date.now();
+  const start = c.createdAt;
+  const end = new Date(c.targetDate + 'T23:59:59').getTime();
+  const total  = Math.max(1, Math.ceil((end - start) / 86400000));
+  const passed = Math.max(0, Math.min(total, Math.ceil((now - start) / 86400000)));
+  const pct = (passed / total) * 100;
+  const whyToday = pickWhyOfTheDay(c.why);
+
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-hero">
+      <span class="label">已经走了</span>
+      <div class="num-xl">${passed}</div>
+      <div class="total">共 ${total} 天</div>
+      <div class="name">${escapeHtml(c.name)}</div>
+      <div class="date">目标日 · ${escapeHtml(c.targetDate)}</div>
+    </div>
+    <div class="detail-progress progress"><span style="width:${pct}%"></span></div>
+
+    ${whyToday ? `
+      <div class="dotted">· · · · · · · ·</div>
+      <div class="why-quote">
+        <div class="quote-text">${escapeHtml(whyToday)}</div>
+        <div class="quote-tag"><span class="label">今日为何</span></div>
+      </div>` : ''}
+
+    <div class="dotted">· · · · · · · ·</div>
+
+    <div class="detail-meta">
+      ${c.vision ? `
+        <div>
+          <span class="item-label">如果完成</span>
+          <div class="item-body">${escapeHtml(c.vision)}</div>
+        </div>` : ''}
+      ${c.promise ? `
+        <div>
+          <span class="item-label">承诺</span>
+          <div class="item-body large">${escapeHtml(c.promise)}</div>
+        </div>` : ''}
+    </div>
+
+    <div class="detail-input">
+      <span class="label">今日为它做了什么</span>
+      <form id="detailNote">
+        <input class="field" name="note" placeholder="一句话也行" autocomplete="off" required />
+        <button class="submit" type="submit">记下</button>
+      </form>
+    </div>`;
+
+  // 跨模块联动：写入认知模块，tag=goal 并 linkedTo 该倒计时 id
+  document.getElementById('detailNote').addEventListener('submit', e => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const content = (fd.get('note') || '').trim();
+    if (!content) return;
+    db.cognitions.add({
+      content,
+      tag: 'goal',
+      linkedTo: c.id,
+      linkedName: c.name, // 冗余存一下，后续认知列表展示无需 join
+    });
+    e.target.reset();
+    showToast('已记入「认知」');
+  });
+}
+
+/* 每天一句：把 why 按换行 / 句号切分，用 yyyymmdd 作种子选一句 */
+function pickWhyOfTheDay(why) {
+  if (!why) return '';
+  const parts = String(why).split(/[\n。.]+/).map(s => s.trim()).filter(Boolean);
+  if (!parts.length) return String(why).trim();
+  const seed = parseInt(todayStr().replace(/-/g, ''), 10);
+  return parts[seed % parts.length];
+}
+
+/* 完成仪式：全屏黑底，依次淡入 Why + 承诺，确认后标记 completed */
+function completeCountdown() {
+  if (!detailContext) return;
+  openCeremony(detailContext);
+}
+
+let _ceremonyContext = null;
+
+function openCeremony(countdownId) {
+  const c = db.countdowns.get(countdownId);
+  if (!c) return;
+  _ceremonyContext = countdownId;
+  const days = Math.max(0, Math.ceil((Date.now() - c.createdAt) / 86400000));
+  // 把 why 按换行/句号切成多行
+  const lines = String(c.why || '')
+    .split(/[\n。.]+/)
+    .map(s => s.trim())
+    .filter(Boolean)
+    .slice(0, 6);
+
+  document.getElementById('ceremonyBrand').textContent = `${days} 天前 · 完成仪式`;
+  document.getElementById('ceremonyBody').innerHTML = `
+    <div class="ceremony-eyebrow">${days} 天前你写下…</div>
+    ${lines.length
+      ? lines.map((l, i) => `<div class="ceremony-line delay-${Math.min(i, 5)}">${escapeHtml(l)}</div>`).join('')
+      : `<div class="ceremony-line delay-0" style="color:#6b6b6b">（当时没写「为什么重要」）</div>`}
+    ${c.promise ? `<div class="ceremony-promise">${escapeHtml(c.promise)}</div>` : ''}`;
+
+  document.getElementById('ceremony').classList.add('active');
+}
+
+function closeCeremony() {
+  document.getElementById('ceremony').classList.remove('active');
+  _ceremonyContext = null;
+}
+
+function confirmComplete() {
+  if (!_ceremonyContext) return;
+  db.countdowns.update(_ceremonyContext, { completed: true, completedAt: Date.now() });
+  showToast('完成。');
+  closeCeremony();
+  exitCountdownDetail();
+}
+
+/* 承诺句首屏闪现：每天首次打开时一次，0.8s */
+function flashPromiseIfNeeded() {
+  const today = todayStr();
+  const settings = db.settings.get();
+  if (settings.lastPromiseFlash === today) return;
+  const cd = db.countdowns.list()
+    .filter(c => c.promise && !c.completed)
+    .sort((a, b) => b.createdAt - a.createdAt)[0];
+  if (!cd) return;
+
+  const div = document.createElement('div');
+  div.className = 'promise-flash';
+  div.innerHTML = `<div class="promise-flash-text">${escapeHtml(cd.promise)}</div>`;
+  document.body.appendChild(div);
+  // 双 RAF 保证 transition 触发
+  requestAnimationFrame(() => requestAnimationFrame(() => div.classList.add('show')));
+  setTimeout(() => {
+    div.classList.remove('show');
+    setTimeout(() => div.remove(), 360);
+  }, 800);
+
+  db.settings.set({ lastPromiseFlash: today });
+}
+
+/* 周日提醒：当天且本周还没做周复盘 → 复盘 tab 顶部插入一条 */
+function maybeShowSundayBar() {
+  const now = new Date();
+  if (now.getDay() !== 0) return; // 不是周日
+  const settings = db.settings.get();
+  const today = todayStr();
+  if (settings.sundayBarDismissedAt === today) return;
+  // 本周已有周复盘？
+  const weekStart = new Date(now); weekStart.setHours(0,0,0,0);
+  weekStart.setDate(now.getDate() - 6); // 周日往前 6 天 = 本周一
+  const has = db.reviews.list().some(r =>
+    r.type === 'week' && r.createdAt >= weekStart.getTime()
+  );
+  if (has) return;
+
+  // 在 review tab 顶部插入条；不强行展示，等用户切到 review 时也能看到
+  const page = document.getElementById('page-review');
+  if (!page || document.getElementById('sundayBar')) return;
+  const bar = document.createElement('div');
+  bar.id = 'sundayBar';
+  bar.className = 'sunday-bar';
+  bar.dataset.action = 'startWeekReview';
+  bar.innerHTML = `
+    <span>今天周日 · 要不要做个周复盘？</span>
+    <button class="dismiss" data-action="dismissSunday" aria-label="关闭">×</button>`;
+  // 插到 topbar 之后、列表之前
+  const topbar = page.querySelector('.topbar');
+  topbar.insertAdjacentElement('afterend', bar);
+}
+
+function dismissSundayBar() {
+  const bar = document.getElementById('sundayBar');
+  if (bar) bar.remove();
+  db.settings.set({ sundayBarDismissedAt: todayStr() });
+}
+
+/* Toast：轻量提示，1.5 秒淡出 */
+let _toastTimer = null;
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.className = 'toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+/* ===== 10. Bootstrap ===== */
+function bootstrap() {
+  migrate();
+
+  // PWA standalone 检测：从主屏图标启动时给 body 加标记，CSS 可据此区分
+  // （iOS 用 navigator.standalone，其他 UA 用 display-mode media query）
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+  if (isStandalone) document.body.classList.add('is-standalone');
+
+  // URL 参数：开发/截图用（?demo=1 强制 onboarded+seed，?theme=light|dark 强制主题）
+  const params = new URLSearchParams(location.search);
+  const forceTheme = params.get('theme');
+  const demoMode   = params.has('demo');
+
+  // 初始化图标（FAB / 时光机）
+  document.getElementById('fab').innerHTML = icons.plus();
+  document.querySelectorAll('[data-action="timeMachine"]').forEach(el => el.innerHTML = icons.timeM());
+
+  // 主题（urlOverride > saved > 默认 light）
+  const settings = db.settings.get();
+  const theme = forceTheme || settings.theme || 'light';
+  applyTheme(theme);
+
+  renderTabbar();
+
+  // demo / onboarded
+  if (demoMode) {
+    db.settings.set({ onboarded: true, name: settings.name || '小宇' });
+    seedExamples();
+    document.getElementById('splash').classList.add('hidden');
+    switchTab('countdown');
+  } else if (db.settings.get().onboarded) {
+    document.getElementById('splash').classList.add('hidden');
+    switchTab(currentTab);
+  }
+  // 否则：splash 默认显示
+
+  // 截图/调试用：?view=detail | wizard | report | reviews | newReview |
+  //              timeMachine | ceremony | stats | newHabit | flash
+  const view = params.get('view');
+  if (view === 'detail') {
+    const first = db.countdowns.list()[0];
+    if (first) setTimeout(() => enterCountdownDetail(first.id), 0);
+  } else if (view === 'wizard') {
+    setTimeout(() => openNewCountdown(), 0);
+  } else if (view === 'report') {
+    const t = params.get('type') || 'week';
+    const items = db.reviews.list().filter(r => r.type === t).sort((a,b) => b.createdAt - a.createdAt);
+    if (items[0]) setTimeout(() => enterReviewReport(items[0].id), 0);
+  } else if (view === 'reviews') {
+    setTimeout(() => switchTab('review'), 0);
+  } else if (view === 'newReview') {
+    setTimeout(() => openNewReview(params.get('type') || 'week'), 0);
+  } else if (view === 'timeMachine') {
+    setTimeout(() => openTimeMachine(), 0);
+  } else if (view === 'ceremony') {
+    const first = db.countdowns.list()[0];
+    if (first) setTimeout(() => openCeremony(first.id), 0);
+  } else if (view === 'stats') {
+    _checkinMode = 'stats';
+    setTimeout(() => switchTab('checkin'), 0);
+  } else if (view === 'newHabit') {
+    setTimeout(() => openNewHabit(), 0);
+  } else if (view === 'flash') {
+    // 用一个未来日期强制闪现（绕过 lastPromiseFlash 节流）
+    db.settings.set({ lastPromiseFlash: '' });
+    setTimeout(() => flashPromiseIfNeeded(), 100);
+  }
+
+  // 启动后副作用：每天首次承诺闪现 + 周日复盘提醒（view 调试模式不触发）
+  if (!view) {
+    flashPromiseIfNeeded();
+    maybeShowSundayBar();
+  }
+
+  /* === 全局事件代理 === */
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-action]');
+    if (!t) return;
+    const a = t.dataset.action;
+    if (a === 'toggleTheme') toggleTheme();
+    else if (a === 'closeModal') closeModal();
+    else if (a === 'timeMachine') openTimeMachine();
+    else if (a === 'closeTimeMachine') closeTimeMachine();
+    else if (a === 'echo') recordEcho(t.dataset.r);
+    else if (a === 'exitDetail') exitCountdownDetail();
+    else if (a === 'completeCountdown') completeCountdown();
+    else if (a === 'closeCeremony') closeCeremony();
+    else if (a === 'confirmComplete') confirmComplete();
+    else if (a === 'newReview') openNewReview(t.dataset.type);
+    else if (a === 'openReport') enterReviewReport(t.dataset.id);
+    else if (a === 'closeReport') exitReviewReport();
+    else if (a === 'exportReport') exportReport();
+    else if (a === 'startWeekReview') {
+      dismissSundayBar();
+      openNewReview('week');
+    }
+    else if (a === 'dismissSunday') dismissSundayBar();
+  });
+
+  document.getElementById('fab').addEventListener('click', handleFab);
+
+  // ESC 关 Modal / 时光机 / 仪式
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (document.getElementById('ceremony').classList.contains('active')) {
+      closeCeremony();
+    } else if (document.getElementById('timeMachine').classList.contains('active')) {
+      closeTimeMachine();
+    } else {
+      closeModal();
+    }
+  });
+
+  // 点击 modal 背景关闭
+  document.getElementById('modal').addEventListener('click', e => {
+    if (e.target.id === 'modal') closeModal();
+  });
+
+  // Splash 进入
+  document.getElementById('splashForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const name = document.getElementById('splashName').value.trim() || 'You';
+    const isFirst = !db.settings.get().onboarded;
+    db.settings.set({ onboarded: true, name });
+    document.getElementById('splash').classList.add('hidden');
+    if (isFirst) seedExamples();
+    switchTab('countdown');
+  });
+}
+
+/* 首次种入示例，让用户立刻看到"形" */
+function seedExamples() {
+  if (db.countdowns.list().length === 0) {
+    const inDays = n => {
+      const d = new Date();
+      d.setDate(d.getDate() + n);
+      return fmtDate(d);
+    };
+    db.countdowns.add({ name: '研究生毕业',  targetDate: inDays(220), why: '想成为能独立研究的人', vision: '答辩那天父母在台下',  promise: '我会每天读一篇论文' });
+    db.countdowns.add({ name: '把书写完',    targetDate: inDays(95),  why: '把这两年的思考留下来', vision: '拿到样书的那天',     promise: '我会每天写 500 字'    });
+  }
+  if (db.habits.list().length === 0) {
+    db.habits.add({ name: '阅读', minStart: '读一页',          frequency: 'daily', failPolicy: 'soft' });
+    db.habits.add({ name: '运动', minStart: '换上运动鞋走出门', frequency: 'daily', failPolicy: 'soft' });
+    db.habits.add({ name: '写作', minStart: '写一句',          frequency: 'daily', failPolicy: 'soft' });
+    // 让"阅读"今天先打卡，让示例画面有完成感
+    const habits = db.habits.list();
+    db.checkins.add({ habitId: habits[0].id, date: todayStr(), completed: true });
+  }
+  if (db.cognitions.list().length === 0) {
+    const now = Date.now();
+    const D = 86400000;
+    const arr = [
+      // 近期：让认知 timeline 看起来有内容
+      { content: '今天读到："不要在低谷期做决定"。记下来。',           tag: 'quote',  ts: now - 2 * 3600000 },
+      { content: '运动完心情明显好转。情绪先服从身体，再服从想法。',       tag: 'mood',   ts: now - 5 * 3600000 },
+      { content: '把任务拆到"15 分钟能完成"的颗粒度，启动率明显高。',     tag: 'lesson', ts: now - 26 * 3600000 },
+      // 时光机候选：30 / 90 / 一年前各放一条
+      { content: '想清楚了：今年只做一件事，把书写完。',               tag: 'goal',   ts: now - 30 * D - 3600000 },
+      { content: '做事不能等"准备好"，准备好就晚了。',                tag: 'lesson', ts: now - 90 * D + 2 * D },
+      { content: '焦虑很多时候是身体先觉得不对，再让大脑找理由。',         tag: 'mood',   ts: now - 365 * D + 5 * D },
+    ];
+    arr.forEach(a => db.cognitions.add({ content: a.content, tag: a.tag, createdAt: a.ts }));
+  }
+  if (db.reviews.list().length === 0) {
+    const wk = 7 * 86400000;
+    db.reviews.add({
+      type: 'week',
+      gain1: '坚持早起 5 天',
+      gain2: '完成了 PPT 初稿',
+      gain3: '开了一个新坑',
+      loss1: '没睡好',
+      loss2: '焦虑',
+      loss3: '推迟了讲座',
+      lesson: '别再用周末补作业了。',
+      focus:  '把第二章写出大纲',
+      createdAt: Date.now() - wk * 1.5,
+    });
+    db.reviews.add({
+      type: 'week',
+      gain1: '把书的第二章写完了',
+      gain2: '保持每天运动',
+      gain3: '理清了下一步研究方向',
+      loss1: '熬夜了三天',
+      loss2: '约的人没赴约',
+      loss3: '该回的邮件拖了一周',
+      lesson: '能量管理比时间管理重要。',
+      focus:  '把第三章写出大纲',
+      createdAt: Date.now() - wk * 0.4,
+    });
+  }
+}
+
+bootstrap();
+</script>
+</body>
+</html>
