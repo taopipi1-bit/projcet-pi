@@ -3402,10 +3402,20 @@ function openSyncSettings() {
 
   // 立即同步
   $('syncNow').onclick = async () => {
+    const wasEmpty = !$('syncGistId').value.trim();
     $('syncNow').disabled = true;
     try {
       const r = await cloudSync.syncNow();
-      showToast(r.pulled ? '✓ 已从云端拉取' : '✓ 已推送到云端');
+      // 首次推送时若 Gist 是自动创建的, 回填 ID 到输入框 (方便长按复制)
+      const newGistId = cloudSync.getConfig().gistId;
+      if (wasEmpty && newGistId) {
+        $('syncGistId').value = newGistId;
+        $('syncGistId').focus();
+        try { $('syncGistId').select(); } catch (_) {}
+        showToast('✓ 已创建私密 Gist (ID 已填入, 复制到其他设备使用)');
+      } else {
+        showToast(r.pulled ? '✓ 已从云端拉取' : '✓ 已推送到云端');
+      }
     } catch (e) {
       showToast('同步失败: ' + (e.message || e));
     } finally {
