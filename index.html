@@ -210,6 +210,12 @@
     justify-content: space-between;
     align-items: baseline;
   }
+  .cd-card-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    margin-left: var(--s-3);
+  }
 
   /* ================================ 倒计时卡片 ================================ */
   .cd-card .name {
@@ -454,6 +460,7 @@
   }
   .checkin-row:last-child { border-bottom: none; }
   .checkin-row > div:not(.checkbox) { flex: 1; min-width: 0; }
+  .checkin-content { flex: 1; min-width: 0; }
   .checkin-row .streak {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1139,6 +1146,13 @@
     font-size: 11px;
     color: var(--gray);
     letter-spacing: 0.04em;
+  }
+  .habit-stat-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    margin-left: var(--s-3);
+    flex-shrink: 0;
   }
 
   .dot-grid-wrap {
@@ -1869,17 +1883,18 @@ function switchTab(id, opts = {}) {
 }
 
 /* === 删除倒计时 === */
-function deleteCountdown() {
-  if (!detailContext) return;
-  const c = db.countdowns.get(detailContext);
+function deleteCountdown(id = detailContext) {
+  if (!id) return;
+  const c = db.countdowns.get(id);
   if (!c) return;
   const ok = confirm(`确定删除「${c.name}」?\n\n这条倒计时及其上的所有备注都会被清掉, 此操作不可撤销。`);
   if (!ok) return;
-  // 删除关联的 cognitions (linkedTo === detailContext) ?
+  // 删除关联的 cognitions (linkedTo === id) ?
   // 现在不强行级联, 让认知保留 (用户可能也想保留某些想法)。
-  db.countdowns.del(detailContext);
+  db.countdowns.del(id);
   showToast('已删除');
-  exitCountdownDetail();
+  if (detailContext === id) exitCountdownDetail();
+  else renderCountdowns();
 }
 
 /* ===== 5. 工具 ===== */
@@ -1969,7 +1984,12 @@ function renderCountdowns() {
       <div class="card cd-card" data-id="${c.id}">
         <div class="row-between">
           <span class="label">已经走了</span>
-          <span class="label">${passed} / ${total}</span>
+          <span class="cd-card-actions">
+            <span class="label">${passed} / ${total}</span>
+            <button type="button" class="item-delete" data-action="deleteCountdown" data-id="${c.id}" aria-label="删除这个倒计时" title="删除">
+              ${icons.trash()}
+            </button>
+          </span>
         </div>
         <div class="name">${escapeHtml(c.name)}</div>
         <div class="row-between" style="align-items:flex-end">
@@ -1981,7 +2001,10 @@ function renderCountdowns() {
       </div>`;
   }).join('');
   el.querySelectorAll('.cd-card').forEach(card => {
-    card.addEventListener('click', () => enterCountdownDetail(card.dataset.id));
+    card.addEventListener('click', e => {
+      if (e.target.closest('.item-delete')) return;
+      enterCountdownDetail(card.dataset.id);
+    });
   });
 }
 
@@ -2036,16 +2059,32 @@ function renderCheckinsToday(habits, todayChecks, allChecks) {
         return `
           <div class="checkin-row ${done ? 'done' : ''}" data-habit="${h.id}">
             <div class="checkbox"></div>
-            <div>
+            <div class="checkin-content">
               <div class="name">${escapeHtml(h.name)}</div>
               <div class="streak">${streak > 0 ? '🔥 ' + streak + ' 天' : '今天首次'}${h.minStart ? ' · ' + escapeHtml(h.minStart) : ''}</div>
             </div>
+            <button type="button" class="item-delete" data-action="deleteHabit" data-id="${h.id}" aria-label="删除这个习惯" title="删除">
+              ${icons.trash()}
+            </button>
           </div>`;
       }).join('')}
     </div>`;
   body.querySelectorAll('.checkin-row').forEach(row => {
-    row.addEventListener('click', () => toggleCheckin(row.dataset.habit));
+    row.addEventListener('click', e => {
+      if (e.target.closest('.item-delete')) return;
+      toggleCheckin(row.dataset.habit);
+    });
   });
+}
+
+function deleteHabit(id) {
+  const h = db.habits.get(id);
+  if (!h) return;
+  if (!confirm(`确定删除「${h.name}」吗?\n\n这个习惯和它的历史打卡记录都会删除, 此操作不可撤销。`)) return;
+  db.habits.del(id);
+  db.checkins.save(db.checkins.list().filter(c => c.habitId !== id));
+  renderCheckins();
+  showToast('已删除');
 }
 
 function renderCheckinsStats(habits, allChecks) {
@@ -2069,7 +2108,12 @@ function renderCheckinsStats(habits, allChecks) {
       <div class="habit-stat">
         <div class="header">
           <span class="name">${escapeHtml(h.name)}</span>
-          <span class="meta">🔥 ${streak} · ${dots.doneCount} / 365</span>
+          <span class="habit-stat-actions">
+            <span class="meta">🔥 ${streak} · ${dots.doneCount} / 365</span>
+            <button type="button" class="item-delete" data-action="deleteHabit" data-id="${h.id}" aria-label="删除这个习惯" title="删除">
+              ${icons.trash()}
+            </button>
+          </span>
         </div>
         <div class="dot-grid-wrap">
           <div class="dot-grid">${dots.html}</div>
@@ -3902,7 +3946,8 @@ async function bootstrap() {
       openNewReview();
     }
     else if (a === 'dismissSunday') dismissSundayBar();
-    else if (a === 'deleteCountdown') deleteCountdown();
+    else if (a === 'deleteCountdown') deleteCountdown(t.dataset.id || detailContext);
+    else if (a === 'deleteHabit') deleteHabit(t.dataset.id);
   });
 
   document.getElementById('fab').addEventListener('click', handleFab);
