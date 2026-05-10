@@ -1436,6 +1436,17 @@
     background: var(--bg-subtle);
     transform: translateY(1px);
   }
+  .habit-delete {
+    opacity: 1;
+    color: #c62828;
+    border: 1px solid rgba(198,40,40,0.18);
+    background: rgba(198,40,40,0.07);
+  }
+  [data-theme="dark"] .habit-delete {
+    color: #e58a8a;
+    border-color: rgba(229,138,138,0.22);
+    background: rgba(229,138,138,0.10);
+  }
 
   /* ================================ 复盘 (v2 大字卡) ================================
    * 单条复盘 = 大字内容 + 时间戳 + 可选心情 emoji; 不再分周/月/年。 */
@@ -2063,7 +2074,7 @@ function renderCheckinsToday(habits, todayChecks, allChecks) {
               <div class="name">${escapeHtml(h.name)}</div>
               <div class="streak">${streak > 0 ? '🔥 ' + streak + ' 天' : '今天首次'}${h.minStart ? ' · ' + escapeHtml(h.minStart) : ''}</div>
             </div>
-            <button type="button" class="item-delete" data-action="deleteHabit" data-id="${h.id}" aria-label="删除这个习惯" title="删除">
+            <button type="button" class="item-delete habit-delete" data-action="deleteHabit" data-id="${h.id}" aria-label="删除这个习惯" title="删除">
               ${icons.trash()}
             </button>
           </div>`;
@@ -2110,7 +2121,7 @@ function renderCheckinsStats(habits, allChecks) {
           <span class="name">${escapeHtml(h.name)}</span>
           <span class="habit-stat-actions">
             <span class="meta">🔥 ${streak} · ${dots.doneCount} / 365</span>
-            <button type="button" class="item-delete" data-action="deleteHabit" data-id="${h.id}" aria-label="删除这个习惯" title="删除">
+            <button type="button" class="item-delete habit-delete" data-action="deleteHabit" data-id="${h.id}" aria-label="删除这个习惯" title="删除">
               ${icons.trash()}
             </button>
           </span>
