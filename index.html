@@ -1376,6 +1376,10 @@
     white-space: pre-wrap;
     word-wrap: break-word;
   }
+  .journal-content {
+    flex: 1;
+    min-width: 0;
+  }
   .journal-tag {
     display: inline-block;
     font-size: 10px;
@@ -1392,6 +1396,31 @@
     color: var(--gray);
     font-size: 14px;
     line-height: 1.8;
+  }
+
+  .item-delete {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--gray);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.45;
+    transition: opacity var(--d-fast) var(--ease-soft),
+                color var(--d-fast) var(--ease-soft),
+                background var(--d-fast) var(--ease-soft),
+                transform var(--d-fast) var(--ease-soft);
+  }
+  .item-delete svg { width: 15px; height: 15px; }
+  .item-delete:active {
+    opacity: 1;
+    color: var(--accent);
+    background: var(--bg-subtle);
+    transform: translateY(1px);
   }
 
   /* ================================ 复盘 (v2 大字卡) ================================
@@ -1417,6 +1446,12 @@
     font-size: 12px;
     color: var(--gray);
     letter-spacing: 0.04em;
+  }
+  .review-card-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-2);
+    margin-left: var(--s-3);
   }
   .review-card-mood { font-size: 18px; line-height: 1; }
   .review-card-content {
@@ -1763,6 +1798,7 @@ const icons = {
   cloud:  () => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>`,
   eye:    () => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
   eyeOff: () => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`,
+  trash:  () => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>`,
 };
 
 /* ===== 3. 主题 ===== */
@@ -2166,13 +2202,25 @@ function renderCognitions() {
         return `
           <div class="journal-entry">
             <div class="journal-time">${fmtTime(c.createdAt)}</div>
-            <div>
+            <div class="journal-content">
               <div class="journal-body">${escapeHtml(c.content)}</div>
               <span class="journal-tag">${t.label}</span>
             </div>
+            <button type="button" class="item-delete" data-action="deleteCognition" data-id="${c.id}" aria-label="删除这条认知" title="删除">
+              ${icons.trash()}
+            </button>
           </div>`;
       }).join('')}
     </section>`).join('') + `</div>`;
+}
+
+function deleteCognition(id) {
+  const c = db.cognitions.get(id);
+  if (!c) return;
+  if (!confirm('确定删除这条认知吗?\n\n删除后不可撤销。')) return;
+  db.cognitions.del(id);
+  renderCognitions();
+  showToast('已删除');
 }
 
 /* 复盘 v2: 不分周/月/年, 单条 = 一段心声 + 时间戳 (+ 可选心情)。
@@ -2219,11 +2267,26 @@ function renderReviews() {
       <div class="review-card" data-action="openReport" data-id="${r.id}">
         <div class="review-card-meta">
           <span>${escapeHtml(dateStr)}</span>
-          ${mood}
+          <span class="review-card-actions">
+            ${mood}
+            <button type="button" class="item-delete" data-action="deleteReview" data-id="${r.id}" aria-label="删除这条复盘" title="删除">
+              ${icons.trash()}
+            </button>
+          </span>
         </div>
         ${bodyHtml}
       </div>`;
   }).join('') + `</div>`;
+}
+
+function deleteReview(id) {
+  const r = db.reviews.get(id);
+  if (!r) return;
+  if (!confirm('确定删除这条复盘吗?\n\n删除后不可撤销。')) return;
+  db.reviews.del(id);
+  if (reportContext === id) reportContext = null;
+  renderReviews();
+  showToast('已删除');
 }
 
 /* ===== 7. Modal ===== */
@@ -3830,6 +3893,8 @@ async function bootstrap() {
     else if (a === 'confirmComplete') confirmComplete();
     else if (a === 'newReview') openNewReview();
     else if (a === 'openReport') enterReviewReport(t.dataset.id);
+    else if (a === 'deleteCognition') deleteCognition(t.dataset.id);
+    else if (a === 'deleteReview') deleteReview(t.dataset.id);
     else if (a === 'closeReport') exitReviewReport();
     else if (a === 'exportReport') exportReport();
     else if (a === 'startWeekReview') {
